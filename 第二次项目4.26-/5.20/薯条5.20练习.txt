@@ -1,0 +1,19 @@
+class Solution {
+public:
+    bool canPartition(vector<int>& nums) {
+        int size=nums.size(),sum=0;
+        sum=std::accumulate(nums.begin(),nums.end(),0);
+        if((sum&1)==1)return false;
+        int target=sum/2;
+        auto dp=vector<bool>(sum/2+1,false);
+        dp[0]=true;
+        for(int i=1;i<=size;i++){
+            int val=nums[i-1];
+            for(int j=target;j>=val;j--){
+                dp[j]=dp[j]||dp[j-val];
+            }
+        }
+        return dp.back();
+
+    }
+};

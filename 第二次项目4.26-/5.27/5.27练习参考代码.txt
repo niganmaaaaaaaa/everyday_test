@@ -1,0 +1,182 @@
+-----------------------练习1-----------------
+#include<cstdio>
+#include<iostream>
+#include<algorithm>
+#include<queue>
+using namespace std;
+
+/*
+	单源最短路问题
+		可以提前算出各个点的最短路径，然后再根据终点变化来适当舍去操作某个点的最短路径
+	建议看题解https://www.luogu.com.cn/article/azvbm988
+*/
+
+#define inf 2147483647
+#define int long long
+int n, m, b, s;
+struct edge {
+	int to, next, dis;
+}e[1100000];
+int dis[1100000], vis[1100000];
+int head[1100000], tot, t;
+struct cg {
+	int time, x;
+}c[1100000];
+struct node {
+	int dis, pos;
+	bool operator<(const node& x)const {
+		return x.dis < dis;
+	}
+};
+priority_queue<node>q;
+inline void add(int x, int y, int w) {
+	e[++tot].to = y;
+	e[tot].next = head[x];
+	e[tot].dis = w;
+	head[x] = tot;
+}
+inline bool cmp(cg a, cg b) {
+	return a.time < b.time;
+}
+void dijkstra() {
+	dis[b] = 0;
+	q.push((node) { 0, b });
+	while (!q.empty()) {
+		node tmp = q.top();
+		q.pop();
+		int x = tmp.pos;
+		if (vis[x])continue;
+		vis[x] = 1;
+		for (int i = head[x]; i; i = e[i].next) {
+			int y = e[i].to;
+			if (dis[y] > dis[x] + e[i].dis) {
+				dis[y] = dis[x] + e[i].dis;
+				if (!vis[y])q.push((node) { dis[y], y });
+			}
+		}
+	}
+}
+signed main() {
+	scanf("%lld%lld%lld%lld", &n, &m, &b, &s);
+	for (int i = 1; i <= n; ++i)dis[i] = inf;
+	for (int i = 1; i <= m; ++i) {
+		int x, y, z;
+		scanf("%lld%lld%lld", &x, &y, &z);
+		add(x, y, z); add(y, x, z);
+	}scanf("%lld", &t);
+	for (int i = 1; i <= t; ++i)scanf("%lld%lld", &c[i].time, &c[i].x);
+	sort(c + 1, c + t + 1, cmp);//离线排序处理 
+	dijkstra();//dijkstra
+	c[0].x = s;//初始化 
+	for (int i = 1; i <= t; ++i)
+		if (dis[c[i].x] < c[i + 1].time) {//判断能否到达 
+			printf("%lld\n", max(dis[c[i].x], c[i].time));//能就输出较大的那个 
+			return 0;
+		}
+	printf("%lld\n", max(dis[c[t].x], c[t].time));//不能则一定能在最后抓住 
+	return 0;
+}
+-----------------------练习2-----------------
+#include<cstdio>
+#include<iostream>
+#include<algorithm>
+using namespace std;
+/*
+	这是一个模拟，把管道看成是两条边，连着两个点，每个点有一个极限权值，如果大于就输出-1，
+	因为水面再也无法上涨了；水从第一个点开始流，然后按照常识去算什么时候可以流到另一个管子里；
+		首先将所有没有水但是可以被灌到水的管子标记为有水，然后求出有水的管子里水面高度的最小值。
+		如果蜘蛛所在的管子有水且最小值为蜘蛛的位置，那么说明此时蜘蛛碰到了水，因为如果最小值大于蜘蛛高度，那么蜘蛛一定会被淹死，管子是个连通器。
+	然后我们就比较深度就可以了，深度可以转化成高度，逆转一下，就比较好想了。
+	参考题解：https://www.luogu.com.cn/article/zc3y6m2l
+*/
+
+struct node {
+	int x, y, h;
+}a[201];
+bool f[201];
+int n, m, x, y, z, t, cnt, head[2001], u, v, w;
+struct Edge {
+	int w, nxt, to;
+}edge[201 * 201];
+int hh(int x)
+{
+	for (int i = 1; i <= n; i++)
+	{
+		if (a[i].x == x)
+			return i;
+	}
+}
+void add(int u, int v, int w)
+{
+	edge[++cnt].to = v;
+	edge[cnt].nxt = head[u];
+	edge[cnt].w = w;
+	head[u] = cnt;
+}
+int main()
+{
+	scanf("%d", &n);
+	for (int i = 1; i <= n; i++)
+	{
+		scanf("%d%d%d", &a[i].x, &a[i].y, &a[i].h);
+		a[i].h += a[i].y;
+	}
+	f[1] = 1;
+	scanf("%d", &m);
+	for (int i = 1; i <= m; i++)
+	{
+		scanf("%d%d%d", &u, &v, &w);
+		w = hh(u + w);
+		u = hh(u - 1);
+		add(u, w, v);
+		add(w, u, v);
+	}
+	scanf("%d%d", &x, &y);
+	while (1)
+	{
+		bool ff = 1;
+		while (ff)
+		{
+			ff = 0;
+			for (int i = 1; i <= n; i++)
+			{
+				if (f[i])
+				{
+					for (int j = head[i]; j; j = edge[j].nxt)
+					{
+						if (a[i].h <= edge[j].w && !f[edge[j].to])
+							f[edge[j].to] = ff = 1;
+					}
+				}
+			}
+		}
+		int maxn = 0;
+		for (int i = 1; i <= n; i++)
+		{
+			if (f[i])
+				maxn = max(maxn, a[i].h);
+			if (f[x] && maxn == y)
+			{
+				cout << t << endl;
+				return 0;
+			}
+		}
+		for (int i = 1; i <= n; i++)
+		{
+			if (f[i] && a[i].y == a[i].h && a[i].y == maxn)
+			{
+				cout << "-1";
+				return 0;
+			}
+		}
+		for (int i = 1; i <= n; i++)
+		{
+			if (f[i] && a[i].h == maxn)
+			{
+				a[i].h--;
+				t++;
+			}
+		}
+	}
+	return 0;
+}

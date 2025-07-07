@@ -1,0 +1,323 @@
+------------------------------练习1------------------------------------
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <stack>
+using namespace std;
+/*
+
+    osaraju算法：该算法用于找到所有强连通分量（SCC），具体步骤如下：
+    第一次DFS：遍历原图，记录节点的完成顺序。
+    构建转置图：将原图中的所有边反转。
+    第二次DFS：按完成顺序的逆序遍历转置图，得到所有SCC。
+    输入处理：读取节点数和边数，构建邻接表。对于双向道路（t=2），同时添加两个方向的边。
+    SCC处理：遍历所有SCC，找到最大且字典序最小的SCC。通过排序每个SCC的节点并进行字典序比较实现。
+    输出最大SCC的大小及其包含的节点，按升序排列。
+    邪术,vs有些许报错但问题不大
+*/
+void dfs1(int u, vector<bool>& visited, vector<vector<int>>& adj, vector<int>& order) {
+    stack<pair<int, bool>> st;
+    st.push({ u, false });
+    visited[u] = true;
+    while (!st.empty()) {
+        auto [v, processed] = st.top();
+        st.pop();
+        if (processed) {
+            order.push_back(v);
+            continue;
+        }
+        st.push({ v, true });
+        for (auto w : adj[v]) {
+            if (!visited[w]) {
+                visited[w] = true;
+                st.push({ w, false });
+            }
+        }
+    }
+}
+
+vector<vector<int>> kosaraju(int n, vector<vector<int>>& adj) {
+    vector<bool> visited(n + 1, false);
+    vector<int> order;
+
+    for (int u = 1; u <= n; ++u) {
+        if (!visited[u]) {
+            dfs1(u, visited, adj, order);
+        }
+    }
+
+    vector<vector<int>> adjT(n + 1);
+    for (int u = 1; u <= n; ++u) {
+        for (auto v : adj[u]) {
+            adjT[v].push_back(u);
+        }
+    }
+
+    vector<bool> visited2(n + 1, false);
+    vector<vector<int>> components;
+
+    reverse(order.begin(), order.end());
+    for (auto u : order) {
+        if (!visited2[u]) {
+            vector<int> component;
+            stack<pair<int, bool>> st;
+            st.push({ u, false });
+            visited2[u] = true;
+            component.push_back(u);
+            while (!st.empty()) {
+                auto [v, processed] = st.top();
+                st.pop();
+                if (!processed) {
+                    st.push({ v, true });
+                    for (auto w : adjT[v]) {
+                        if (!visited2[w]) {
+                            visited2[w] = true;
+                            component.push_back(w);
+                            st.push({ w, false });
+                        }
+                    }
+                }
+            }
+            components.push_back(component);
+        }
+    }
+
+    return components;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    int n, m;
+    cin >> n >> m;
+
+    vector<vector<int>> adj(n + 1);
+    for (int i = 0; i < m; ++i) {
+        int a, b, t;
+        cin >> a >> b >> t;
+        adj[a].push_back(b);
+        if (t == 2) {
+            adj[b].push_back(a);
+        }
+    }
+
+    vector<vector<int>> components = kosaraju(n, adj);
+
+    vector<int> best;
+    int max_size = 0;
+
+    for (auto& comp : components) {
+        sort(comp.begin(), comp.end());
+        if (comp.size() > max_size) {
+            max_size = comp.size();
+            best = comp;
+        }
+        else if (comp.size() == max_size) {
+            if (comp < best) {
+                best = comp;
+            }
+        }
+    }
+
+    cout << max_size << '\n';
+    for (size_t i = 0; i < best.size(); ++i) {
+        if (i > 0) {
+            cout << ' ';
+        }
+        cout << best[i];
+    }
+    cout << '\n';
+
+    return 0;
+}
+------------------------------练习2------------------------------------
+#include <iostream>
+#include <vector>
+#include <string>
+
+using namespace std;
+/*
+    分解数字：将数字分解为千位、百位、十位和个位。
+    构建各部分英文表达：分别处理千位、百位、十位和个位的英文单词。
+    处理特殊组合：特别是十位和个位的组合，如11-19的特殊表达。
+    条件判断：根据题目要求，在适当的位置添加“and”。
+*/
+string numberToWords(int num) {
+    if (num == 0) return "zero";
+
+    vector<string> parts;
+    string ones[] = { "", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine" };
+    string teens[] = { "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen" };
+    string tens[] = { "", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety" };
+
+    int q = num / 1000;
+    int h = (num / 100) % 10;
+    int t = (num / 10) % 10;
+    int o = num % 10;
+    int s = t * 10 + o;
+
+    // 处理千位
+    if (q > 0) {
+        parts.push_back(ones[q] + " thousand");
+    }
+
+    // 处理百位
+    if (h > 0) {
+        parts.push_back(ones[h] + " hundred");
+    }
+
+    // 判断是否需要加and
+    bool need_and = false;
+    if ((h > 0 && s > 0 && s <= 10) || (h == 0 && q > 0 && s > 0)) {
+        parts.push_back("and");
+    }
+
+    // 处理十位和个位
+    string ten_str;
+    if (s != 0) {
+        if (t == 0) {
+            ten_str = ones[o];
+        }
+        else if (t == 1) {
+            ten_str = teens[o];
+        }
+        else {
+            ten_str = tens[t];
+            if (o != 0) {
+                ten_str += " " + ones[o];
+            }
+        }
+        parts.push_back(ten_str);
+    }
+
+    // 合并各部分
+    string result;
+    for (size_t i = 0; i < parts.size(); ++i) {
+        if (i > 0) {
+            result += " ";
+        }
+        result += parts[i];
+    }
+    return result;
+}
+
+int main() {
+    int n;
+    cin >> n;
+    cout << numberToWords(n) << endl;
+    return 0;
+}
+------------------------------练习3------------------------------------
+#include<stdio.h>
+#include<iostream>
+#include<string>
+#include<string.h>
+#include<map>
+using namespace std;
+/*
+*	抄的题解 ，这题主要字符转换，细节太多了
+	这题不会很难,但细节极其多
+	首先在输入上就有坑。输入的字符串可能会有空格，不能直接用 scanf 或者 cin。
+	然后是输出。当有特殊情况特判掉的时候，要再补上换行，不然会出现奇怪的 WA 错误。
+	在判断质数与分解质因数时，可以加上优化。因为分解质因数只需要模质数，而除了 2 与 3 之外模 6 都是 1 或 5 
+		所以先特判 2 与 3 之后每 6 个数去尝试分解就可以了。这样的优化能把常数变成原来的  3，1​
+  ，能跑得快一点。
+*/
+
+char str[1001];//输入的字符
+int n;//那个数 
+void str2lld() {//转换成数字 
+	long long ret = 0;
+	bool flg = false;//一开始没有数字 
+	for (int i = 1; str[i] && ret <= 40000000; ++i)
+		if ('0' <= str[i] && str[i] <= '9') {//这一位是数字 
+			ret = ret * 10 + str[i] - '0';
+			flg = true;//标记有数字 
+		}
+	if (!flg)n = 0x7fffffff;//没有数字 
+	else n = ret;
+}
+void trial() {//试除法
+	if (n < 2) {
+		puts("No!\n");//小于2 
+		return;
+	}
+	do {
+		if (n == 2 || n == 3) {//2或3 
+			puts("Yes!\n");
+			return;
+		}
+		if (!(n & 1)) {//2的倍数 
+			puts("No!");
+			break;
+		}
+		if (!(n % 3)) {//3的倍数 
+			puts("No!");
+			break;
+		}
+		bool flag = true;
+		for (int i = 5; i * i <= n; i += 6) {
+			if (n % i == 0) {
+				puts("No!");
+				flag = false;
+				break;
+			}
+			if (n % (i + 2) == 0) {
+				puts("No!");
+				flag = false;
+				break;
+			}
+		}
+		if (flag) {
+			puts("Yes!\n");
+			return;
+		}
+	} while (0);
+	if (n > 40000000) {
+		puts("The number is too large!\n");
+		return;
+	}
+	int m = n;
+	map<int, int> mp;//有多少质数
+	while (!(n & 1)) {//是偶数
+		n >>= 1;//除以2 
+		if (mp.count(2))++mp[2];
+		else mp[2] = 1;
+	}
+	while (!(n % 3)) {//是3的倍数 
+		n /= 3;//除以3
+		if (mp.count(3))++mp[3];
+		else mp[3] = 1;
+	}
+	for (int i = 5; i * i <= n; i += 6) {//其他的都%6余1或5 
+		while (!(n % i)) {
+			n /= i;//试除i(mod 6=5)
+			if (mp.count(i))++mp[i];
+			else mp[i] = 1;
+		}
+		while (!(n % (i + 2))) {
+			n /= i + 2;//试除i+2(mod 6=1)
+			if (mp.count(i + 2))++mp[i + 2];
+			else mp[i + 2] = 1;
+		}
+	}
+	if (n > 1)++mp[n];
+	printf("%d=", m);
+	for (map<int, int>::iterator it = mp.begin(); it != mp.end(); ++it)//遍历质因数 
+		if (it == mp.begin())printf("%d^%d", it->first, it->second);
+		else printf("*%d^%d", it->first, it->second);
+	printf("\n\n");
+}
+int main() {
+	string s;
+	while (1) {
+		printf("Enter the number=\n");
+		getline(cin, s);//读入一整行 
+		strcpy(str + 1, s.c_str());
+		str2lld();//转换数字 
+		if (n == 0x7fffffff)return 0;//没有数字直接退出 
+		printf("Prime? ");
+		trial();
+	}
+}

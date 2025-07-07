@@ -1,0 +1,195 @@
+--------------------------------练习1--------------------------
+#include <iostream>
+#include<vector>
+#include<algorithm>
+
+using namespace std;
+
+typedef long long ll;
+
+/*
+    计算x->count1，y->count3和平局数count2
+    如果x>y直接输出0
+    如果x<=y
+        先看有没有平局
+            有平局
+                平局数量能构满足x+count2>y
+                    直接输出y-x+1
+                不能满足
+                    那么就先处理平局，count1+=count2;
+                    然后就没有平局了
+            没有平局
+                如果x==y 那么只用平局一次，那么就胜利了,直接return 0;，不用+1超过,
+                如果x!=y 那么就循环处理，两人分数差，从最小开始，sum+=分差+1，然后count1++,count3--，这就不用管奇数，偶数了
+                    如果遇到x==y那就按照上面处理
+*/
+ll n, a, b, count1 = 0, count2 = 0, sum = 0, count3 = 0;
+vector<ll> nums1, nums2;
+int main() {
+    cin >> n;
+    for (int i = 0; i < n; ++i) {
+        cin >> a;
+        nums1.push_back(a);
+    }
+    for (int i = 0; i < n; ++i) {
+        cin >> b;
+        ll c = nums1[i] - b;
+        if (c < 0) {//讯风输
+            nums2.push_back(c);
+            count3++;
+        }
+        else if (c > 0) {//迅风赢
+            count1++;
+        }
+        else {//平局
+            count2++;
+        }
+    }
+    if (count1 > count3) {
+        cout << "0";
+    }
+    else if (count1 <= count3) {
+        if (count2 != 0) {//有平局
+            if (count3 - count1 + 1 <= count2) {
+                //平局就能搞定
+                cout << count3 - count1 + 1;
+                return 0;
+            }
+        }
+        if (count2 != -0) {//先把平局搞定
+            count1 += count2;
+            sum += count2;
+        }
+        sort(nums2.begin(), nums2.end());
+        while (count1 <= count3) {
+            ll size = nums2.size() - 1;//末位
+            if (count1 == count3) {//最后一步
+                sum += abs(nums2[size]);//对面少一子就能赢
+                break;
+            }
+            sum += abs(nums2[size]) + 1;
+            nums2.pop_back();
+            count1++, count3--;
+        }
+        cout << sum;
+    }
+
+    return 0;
+}
+--------------------------------练习2--------------------------
+#include<iostream>
+#include<algorithm>
+#include<vector>
+using namespace std;
+/*
+    枚举等待牌：对每个可能的牌，检查是否添加后形成有效和牌。
+    和牌检查：使用贪心算法扣除刻子和顺子，检查剩余牌是否全为零。
+*/
+bool check(const vector<int>& tmp_orig, int n) {
+    vector<int> tmp = tmp_orig;
+    for (int i = 1; i <= n; ++i) {
+        tmp[i] %= 3;
+        if (i + 2 <= n) {
+            int k = min({ tmp[i], tmp[i + 1], tmp[i + 2] });
+            tmp[i] -= k;
+            tmp[i + 1] -= k;
+            tmp[i + 2] -= k;
+        }
+    }
+    for (int i = 1; i <= n; ++i) {
+        if (tmp[i] != 0) return false;
+    }
+    return true;
+}
+
+int main() {
+    int n, m;
+    cin >> n >> m;
+    int total = 3 * m + 1;
+    vector<int> cnt(n + 3, 0);
+    for (int i = 0; i < total; ++i) {
+        int x;
+        cin >> x;
+        cnt[x]++;
+    }
+
+    vector<int> res;
+    for (int c = 1; c <= n; ++c) {
+        cnt[c]++;
+        bool valid = false;
+        for (int i = 1; i <= n; ++i) {
+            if (cnt[i] >= 2) {
+                vector<int> tmp = cnt;
+                tmp[i] -= 2;
+                if (check(tmp, n)) {
+                    valid = true;
+                    break;
+                }
+            }
+        }
+        if (valid) res.push_back(c);
+        cnt[c]--;
+    }
+
+    if (res.empty()) {
+        cout << "NO" << endl;
+    }
+    else {
+        sort(res.begin(), res.end());
+        for (int i = 0; i < res.size(); ++i) {
+            if (i > 0) cout << " ";
+            cout << res[i];
+        }
+        cout << endl;
+    }
+
+    return 0;
+}
+--------------------------------练习3--------------------------
+#include<iostream>
+#include<algorithm>
+#include<vector>
+
+using namespace std;
+/*
+    贪心排序：降序排列商品价格，优先用优惠券购买高价商品。
+    枚举优惠券数量：计算每个数量下的总成本，取最小值
+*/
+typedef long long ll;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, m, w;
+    cin >> n >> m >> w;
+
+    vector<int> a(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+
+    // 降序排序
+    sort(a.rbegin(), a.rend());
+
+    vector<ll> prefix_sum(n + 1, 0);
+    for (int i = 1; i <= n; ++i) {
+        prefix_sum[i] = prefix_sum[i - 1] + a[i - 1];
+    }
+
+    ll total_sum = prefix_sum[n];
+    int k_max = (n + m - 1) / m;
+    ll min_cost = LLONG_MAX;
+
+    for (int k = 0; k <= k_max; ++k) {
+        int s = min(k * m, n);
+        ll cost = (ll)k * w + (total_sum - prefix_sum[s]);
+        if (cost < min_cost) {
+            min_cost = cost;
+        }
+    }
+
+    cout << min_cost << endl;
+
+    return 0;
+}

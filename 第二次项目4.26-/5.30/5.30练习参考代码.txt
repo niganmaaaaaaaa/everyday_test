@@ -1,0 +1,192 @@
+---------------------练习1------------------------
+/*
+	并查集不熟练，建议看题解https://www.luogu.com.cn/problem/solution/P2024
+*/
+#include <cstdio>
+
+inline int read() {
+	char c = getchar(); int n = 0;
+	while (c < '0' || c > '9') { c = getchar(); }
+	while (c >= '0' && c <= '9') { n = (n << 1) + (n << 3) + (c & 15); c = getchar(); }
+	return n;
+}
+
+const int maxN = 100005;
+
+int n, m, ans, fa[maxN * 3];
+
+int find(int u) { return fa[u] == u ? u : fa[u] = find(fa[u]); }
+
+int main() {
+	n = read(), m = read();
+	for (int i = 1; i <= n * 3; i++) { fa[i] = i; }
+	for (; m; m--) {
+		int opt = read(), u = read(), v = read();
+		if (u > n || v > n) { ans++; continue; }
+		if (opt == 1) {
+			if (find(u + n) == find(v) || find(u) == find(v + n)) { ans++; }
+			else {
+				fa[find(u)] = find(v);
+				fa[find(u + n)] = find(v + n);
+				fa[find(u + n + n)] = find(v + n + n);
+			}
+		} else {
+			if (find(u) == find(v) || find(u) == find(v + n)) { ans++; }
+			else {
+				fa[find(u + n)] = find(v);
+				fa[find(u + n + n)] = find(v + n);
+				fa[find(u)] = find(v + n + n);
+			}
+		}
+	}
+	printf("%d\n", ans);
+	return 0;
+}
+---------------------练习2------------------------
+/*
+	看的题解，方法很精妙，又是一道动态规划+深搜
+	还是建议看题解：https://www.luogu.com.cn/article/sm6az4a4
+	我不会，动态规划想不到一点
+*/
+
+#include<bits/stdc++.h>
+using namespace std;
+int n,f[5000][5000],father[5000];
+vector<int> s[5000];
+inline void dfs(int x){
+	f[x][0]=0;
+	f[x][1]=1;
+	if(s[x].size()==0)return;
+	for(register int i=0;i<s[x].size();i++){
+		int y=s[x][i];
+		dfs(y);
+		f[x][0]+=f[y][1];
+		f[x][1]+=min(f[y][1],f[y][0]);
+	}
+}
+int main(){
+	int n;
+	scanf("%d",&n);
+	int a,b,z;
+	for(register int i=1;i<=n;i++){
+		scanf("%d%d",&a,&b);
+		a++;
+		for(register int j=1;j<=b;j++){
+			scanf("%d",&z);
+			z++;
+			s[a].push_back(z);
+			father[z]=1;
+		}
+	}
+	int root;
+	for(register int i=1;i<=n;i++){	//题目未指定根节点,因此需要自己找根节点 
+		if(father[i]==0){
+			root=i;
+			break;
+		}
+	}
+	dfs(root);
+	cout<<min(f[root][0],f[root][1]);
+}
+---------------------练习3------------------------
+/*
+
+每门课程看作一个节点，先修关系构成树形结构（森林）。
+
+添加虚拟根节点0，将所有无先修课的课程连接到0，形成一棵树。
+
+动态规划状态：
+
+dp[i][j]：在以节点i为根的子树中，选择j个节点（包括i）能获得的最大学分。
+
+size_vec[i]：以节点i为根的子树的大小（节点数）。
+
+
+
+每个节点不选子树时学分为0（dp[i][0] = 0）。
+
+只选当前节点时学分为s[i]（dp[i][1] = s[i]）。
+
+DFS：
+
+递归处理每个子树。
+
+合并子树时，采用分组背包思想：
+
+倒序枚举当前子树可选的节点数j（从min(size_vec[u], M+1)到1）。
+
+枚举在子树v中选择的节点数t（从1到min(size_vec[v], j-1)）。
+
+更新状态：dp[u][j] = max(dp[u][j], dp[u][j-t] + dp[v][t])。
+*/
+
+#include <iostream>
+#include <vector>
+#include <functional>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+const int INF = 0x3f3f3f3f; // 定义一个较大的负无穷值
+
+int main() {
+    int n, M;
+    cin >> n >> M; // 输入课程数n和需要选择的课程数M
+    vector<vector<int>> graph(n+1); // 邻接表存储树结构，0号为虚拟根节点
+    vector<int> s(n+1, 0); // 存储每门课程的学分，s[0]=0
+
+    // 读取输入数据，构建树
+    for (int i = 1; i <= n; i++) {
+        int k, score_val;
+        cin >> k >> score_val; // k为先修课编号，score_val为学分
+        s[i] = score_val;
+        if (k == 0) {
+            graph[0].push_back(i); // 没有先修课，则将其连接到虚拟根节点0
+        } else {
+            graph[k].push_back(i); // 有先修课k，添加边k->i
+        }
+    }
+
+    // dp[i][j]：以i为根的子树中选择j个节点（包括i）能获得的最大学分
+    vector<vector<int>> dp(n+1, vector<int>(M+2, -INF)); // 初始化为负无穷
+    vector<int> size_vec(n+1, 0); // 存储每个节点的子树大小（节点数）
+
+    // 初始化：每个节点不选子树时学分为0，只选自己时学分为s[i]
+    for (int i = 0; i <= n; i++) {
+        dp[i][0] = 0;   // 不选任何节点（包括自身）
+        dp[i][1] = s[i]; // 只选自己
+    }
+
+    // DFS遍历树，进行树形DP
+    function<void(int)> dfs = [&](int u) {
+        size_vec[u] = 1; // 初始化子树大小为1（当前节点）
+        for (int v : graph[u]) { // 遍历所有子节点
+            dfs(v); // 递归处理子节点
+            // 更新当前子树大小
+            size_vec[u] += size_vec[v];
+            int up = min(size_vec[u], M+1); // j的上限：当前子树大小与M+1的最小值
+            // 倒序枚举j（背包容量），避免重复计算
+            for (int j = up; j >= 1; j--) {
+                // t：在子树v中选择的节点数（至少1个，最多min(子树v的大小, j-1)）
+                int lim = min(size_vec[v], j-1);
+                for (int t = 1; t <= lim; t++) {
+                    // 如果dp[u][j-t]不可达，则跳过
+                    if (dp[u][j-t] == -INF) continue;
+                    // 更新状态：在u的子树中选j-t个节点（不包括v子树）加上在v子树中选t个节点
+                    int temp = dp[u][j-t] + dp[v][t];
+                    if (temp > dp[u][j]) {
+                        dp[u][j] = temp;
+                    }
+                }
+            }
+        }
+    };
+
+    dfs(0); // 从虚拟根节点0开始DFS
+
+    // 计算答案：实际选课数为min(M+1, 整棵树大小)，因为包含虚拟节点0
+    int total_nodes = min(size_vec[0], M+1);
+    cout << dp[0][total_nodes] << endl;
+
+    return 0;
+}

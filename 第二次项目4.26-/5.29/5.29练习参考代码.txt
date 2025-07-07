@@ -1,0 +1,244 @@
+------------------------------------练习1---------------------------
+三个案例没过关。。。。
+计算每个正方形是否包含原点。
+计算每个正方形到原点的最近距离平方 d2。
+计算每个正方形四个顶点的极角，并转换为规范化区间（[0, 2π)）。
+按 d2 升序排列，确保先处理距离原点近的正方形。
+遍历每个正方形，检查其极角区间是否被已处理的正方形覆盖：
+若存在未被覆盖的区间，则该正方形可见。
+若可见，则将其区间加入覆盖集合。
+
+这里推荐题解思路：https://www.luogu.com.cn/article/pyf9cdly 容易好懂
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cmath>
+#include <set>
+using namespace std;
+
+const double PI = acos(-1.0);
+const double EPS = 1e-9;
+const double TWO_PI = 2.0 * PI;
+
+struct Square {
+    int x, y, L;
+    bool contains_origin;
+    long long d2; // 最近点距离的平方
+    vector<pair<double, double>> intervals; // 正方形的极角区间
+
+    Square(int x, int y, int L) : x(x), y(y), L(L) {
+        contains_origin = (x <= 0 && x + L >= 0 && y <= 0 && y + L >= 0);
+        if (contains_origin) {
+            d2 = 0;
+        } else {
+            // 计算最近点坐标
+            int x0 = (x >= 0) ? x : (x + L <= 0) ? x + L : 0;
+            int y0 = (y >= 0) ? y : (y + L <= 0) ? y + L : 0;
+            d2 = 1LL * x0 * x0 + 1LL * y0 * y0;
+
+            // 正方形的四个顶点
+            vector<pair<double, double>> points = {
+                {x, y}, {x + L, y}, {x, y + L}, {x + L, y + L}
+            };
+
+            // 计算四个顶点的极角并归一化到[0, 2π)
+            vector<double> angles;
+            for (const auto& p : points) {
+                double ang = atan2(p.second, p.first);
+                if (ang < 0) ang += TWO_PI;
+                angles.push_back(ang);
+            }
+            sort(angles.begin(), angles.end());
+            double min_ang = angles[0], max_ang = angles.back();
+
+            // 如果区间跨度过大（大于π），拆分成两个区间
+            if (max_ang - min_ang > PI + EPS) {
+                intervals.push_back({min_ang, TWO_PI});
+                intervals.push_back({0, max_ang});
+            } else {
+                intervals.push_back({min_ang, max_ang});
+            }
+        }
+    }
+};
+
+// 检查区间[a, b]是否被已覆盖区间集合完全覆盖
+bool is_interval_covered(double a, double b, const vector<pair<double, double>>& covered) {
+    if (a > b + EPS) return false; // 无效区间
+    if (covered.empty()) return false;
+
+    double cur = a;
+    bool updated;
+    do {
+        updated = false;
+        for (const auto& inter : covered) {
+            if (inter.first <= cur + EPS && inter.second >= cur - EPS) {
+                if (inter.second > cur) {
+                    cur = inter.second;
+                    updated = true;
+                }
+            }
+        }
+    } while (updated && cur < b);
+
+    return cur >= b - EPS;
+}
+
+// 向覆盖区间集合中添加新区间并合并
+void add_interval(double a, double b, vector<pair<double, double>>& covered) {
+    vector<pair<double, double>> new_covered;
+    int i = 0, n = covered.size();
+
+    // 添加在新区间左侧且不相交的区间
+    while (i < n && covered[i].second < a - EPS) {
+        new_covered.push_back(covered[i]);
+        i++;
+    }
+
+    // 合并与新区间相交的区间
+    double new_a = a, new_b = b;
+    while (i < n && covered[i].first <= b + EPS) {
+        new_a = min(new_a, covered[i].first);
+        new_b = max(new_b, covered[i].second);
+        i++;
+    }
+    new_covered.push_back({new_a, new_b});
+
+    // 添加在新区间右侧且不相交的区间
+    while (i < n) {
+        new_covered.push_back(covered[i]);
+        i++;
+    }
+
+    covered = new_covered;
+}
+
+int main() {
+    int n;
+    cin >> n;
+    vector<Square> squares;
+
+    for (int i = 0; i < n; i++) {
+        int x, y, L;
+        cin >> x >> y >> L;
+        squares.emplace_back(x, y, L);
+    }
+
+    // 按最近点距离平方排序
+    sort(squares.begin(), squares.end(), [](const Square& a, const Square& b) {
+        return a.d2 < b.d2;
+    });
+
+    vector<pair<double, double>> covered;
+    int count = 0;
+
+    for (const auto& sq : squares) {
+        if (sq.contains_origin) {
+            count = 1; // 包含原点的正方形可见，且遮挡后续所有正方形
+            break;
+        }
+
+        bool visible = false;
+        for (const auto& interval : sq.intervals) {
+            double a = interval.first, b = interval.second;
+            if (b - a < EPS) continue; // 忽略空区间
+            if (!is_interval_covered(a, b, covered)) {
+                visible = true;
+                break;
+            }
+        }
+
+        if (visible) {
+            count++;
+            for (const auto& interval : sq.intervals) {
+                double a = interval.first, b = interval.second;
+                if (b - a > EPS) {
+                    add_interval(a, b, covered);
+                }
+            }
+        }
+    }
+
+    cout << count << endl;
+    return 0;
+}
+------------------------------------练习2---------------------------
+篮球规则，我不熟悉
+推荐题解https://www.luogu.com.cn/article/2ffvie0z
+#include<bits/stdc++.h>
+#define ll long long
+using namespace std;
+
+ll s,t,n;
+
+int main()
+{
+	while(scanf("%lld%lld%lld",&s,&t,&n)!=EOF)
+	{
+		ll ans1=0,ans2=0;
+		
+		if(s<n)
+		{
+			ans1=3*s+n-s-1;
+			if(!t) ans1++;
+		}
+		else
+		{
+			ans1=3*max(n-1,min(n,s-t));
+			if(n-s+t==1) ans1++;
+		}
+
+		if(s>t) ans2=3+max(0LL,n-t-1);
+		else ans2=min(3+max(0LL,n-t-1),max(n-t+s,0LL));
+		
+		printf("%lld %lld\n",ans1,ans2);
+	}
+	return 0;
+}
+------------------------------------练习3---------------------------
+贪心
+插入 N 的最优位置：
+最左边的 N 能被所有后续的 O 和 I 组合，因此贡献最大。
+插入 O 的最优位置：
+遍历每个位置，动态维护左边 N 和右边 I 的数量，找到使乘积最大的位置。
+插入 I 的最优位置：
+最右边的 I 能被所有前面的 N 和 O 组合，因此贡献最大。
+#include<iostream>
+#include<string>
+using namespace std;
+long long l,ns,is,sum,maxs=0,mx=0;//longlong……
+string s,sn,si;
+int main()
+{
+    cin>>l>>s;
+    ns=0,is=0,sum=0;//加o的情况……
+    for(int i=0;i<l;i++){if(s[i]=='I'){is++;}}//找右边i的个数
+    for(int i=0;i<l;i++)
+    {
+        if(s[i]=='N'){ns++;}
+        if(s[i]=='O'){sum=sum+ns*is;}
+        if(s[i]=='I'){is--;}
+        mx=max(mx,ns*is);//找出插入o的点
+    }
+    maxs=sum+mx;//加上插入后的方案数
+    sn="N"+s,si=s+"I",l++;
+    ns=0,is=0,sum=0;//加n的情况，并且最好的就是加在最左边
+    for(int i=0;i<l;i++){if(sn[i]=='I'){is++;}}
+    for(int i=0;i<l;i++)
+    {
+        if(sn[i]=='N'){ns++;}
+        if(sn[i]=='O'){sum=sum+ns*is;}
+        if(sn[i]=='I'){is--;}
+    }
+    maxs=max(maxs,sum);//找最优解
+    ns=0,is=0,sum=0;//加i的情况，加在最右边
+    for(int i=0;i<l;i++){if(si[i]=='I'){is++;}}
+    for(int i=0;i<l;i++)
+    {
+        if(si[i]=='N'){ns++;}
+        if(si[i]=='O'){sum=sum+ns*is;}
+        if(si[i]=='I'){is--;}
+    }
+    maxs=max(maxs,sum);
+    cout<<maxs;
+}

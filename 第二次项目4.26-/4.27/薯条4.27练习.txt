@@ -1,0 +1,93 @@
+class Solution {
+public:
+    ListNode* reverseBetween(ListNode* head, int left, int right) {
+        ListNode dummy(0);
+        dummy.next = head;
+        ListNode* pre = &dummy;
+        
+        // 定位到left前一个节点
+        for (int i = 0; i < left-1; ++i)
+            pre = pre->next;
+        
+        // 反转核心逻辑
+        ListNode* cur = pre->next;
+        for (int i = 0; i < right-left; ++i) {
+            ListNode* tmp = cur->next;
+            cur->next = tmp->next;
+            tmp->next = pre->next;
+            pre->next = tmp;
+        }
+        
+        return dummy.next;
+    }
+};
+---------------------------------------------------------------------------------------------------------
+class Solution {
+public:
+    vector<int> twoSum(vector<int>& numbers, int target) {
+        int max;
+        int size=numbers.size();
+        for(int i=0;i<size;++i){
+            if(numbers[i]+numbers[size-1]>=target){
+                max=i;break;
+            }
+        }
+        vector<int> nums;
+        for(int i=max;i<size;++i){
+            for(int j=i+1;j<size;++j){
+                if(numbers[i]+numbers[j]==target){
+                    nums.push_back(i+1);
+                    nums.push_back(j+1);
+                    return nums;
+                }
+            }
+        }
+        return nums;
+    }
+};
+---------------------------------------------------------------------------------------------------------
+/**
+ * Definition for singly-linked list.
+ * struct ListNode {
+ *     int val;
+ *     ListNode *next;
+ *     ListNode() : val(0), next(nullptr) {}
+ *     ListNode(int x) : val(x), next(nullptr) {}
+ *     ListNode(int x, ListNode *next) : val(x), next(next) {}
+ * };
+ */
+class Solution {
+public:
+    ListNode* partition(ListNode* head, int x) {
+        if(head==NULL)return head;
+        ListNode* front;
+        ListNode tmp(0);
+        tmp.next=head;
+        front=&tmp;
+
+        ListNode* back;
+        ListNode* curr;
+        while(front->next!=NULL&&front->next->val<x){
+            front=front->next;
+        }
+        if(front->next==NULL)return head;
+        if(front->next->next==NULL)return head;
+        back=front->next;
+        curr=front->next->next;
+        while(curr!=NULL){
+            while(curr->val>=x){
+                back=curr;
+                curr=curr->next;   
+                if(curr==NULL){
+                    return tmp.next;
+                }
+            }
+            back->next=curr->next;
+            curr->next=front->next;
+            front->next=curr;
+            front=curr;
+            curr=back->next;
+        }
+        return tmp.next;
+    }
+};

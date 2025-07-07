@@ -1,0 +1,113 @@
+/**
+ * Definition for a binary tree node.
+ * struct TreeNode {
+ *     int val;
+ *     TreeNode *left;
+ *     TreeNode *right;
+ *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+ *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+ *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+ * };
+ */
+class Solution {
+    vector<int> a;
+    int sum=0;
+    void search(TreeNode* curr){
+        if(curr==NULL){
+            return;
+        }
+        a.push_back(curr->val);
+        if(curr->left==NULL&&curr->right==NULL){
+            long long  xishu=1,size=a.size();
+            for(int i=size-1;i>=0;--i){
+                sum+=xishu*a[i];
+                xishu*=10;
+            }
+        }
+            search(curr->left);
+            search(curr->right);
+            a.pop_back();
+    }
+public:
+    int sumNumbers(TreeNode* root) {
+        search(root);
+        return sum;
+    }
+};
+---------------------------------------------------------
+class Solution {
+    #define ArrayType char
+    vector<vector<ArrayType>>bucket;
+    vector<int> count;
+    //n代表字符串长度，max为串中最大的数
+    void bucketSort(string& a,int n,int max){
+        bucket.clear();
+        count.resize(max);
+        memset(&count[0],0,sizeof(int)*max);
+        for(int i=0;i<n;++i){
+            count[a[i]]++;
+        }
+        for(int i=0;i<n+1;++i){
+            bucket.push_back({});
+        }
+        for(int i=0;i<max;++i){
+            if(count[i]){
+                int a=count[i];
+                while(a--)
+                bucket[count[i]].push_back(i);
+            }
+        }     
+        int size=0;
+        for(int i=n;i>0;--i){
+       
+            for(int j=0;j<bucket[i].size();++j){
+                a[size++]=bucket[i][j];
+            }
+        }
+    }
+
+public:
+    string frequencySort(string s) {
+        int n=s.size();
+        bucketSort(s,n,256);
+        return s;
+    }
+};
+-----------------------------------------------
+/**
+ * Definition for a binary tree node.
+ * struct TreeNode {
+ *     int val;
+ *     TreeNode *left;
+ *     TreeNode *right;
+ *     TreeNode(int x) : val(x), left(NULL), right(NULL) {}
+ * };
+ */
+class Solution {
+    vector<TreeNode*> a;
+    int type=0;
+    void search(TreeNode* curr, TreeNode* p, TreeNode* q){
+        if(curr==NULL||type==2){
+            return;
+        }
+        if(type==0)
+        a.push_back(curr);
+        if(curr==p||curr==q){
+            if(type==1){//寻找第二个结点
+                type=2;
+            }
+            if(type==0){//寻找第一个结点
+                type=1;
+            }
+        }
+        search(curr->left,p,q);
+        search(curr->right,p,q);
+        if(type!=2&&curr==a[a.size()-1])
+        a.pop_back();
+    }
+public:
+    TreeNode* lowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q) {
+        search(root,p,q);
+        return a[a.size()-1];
+    }
+};

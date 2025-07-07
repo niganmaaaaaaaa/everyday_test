@@ -1,0 +1,15 @@
+class StockSpanner {
+    stack<pair<int,int>> stk;//单调递减栈
+    int now=0;//记录当前天数
+public:
+    StockSpanner() {}
+    
+    int next(int price) {
+        ++now;
+        while(!stk.empty()&&stk.top().second<=price)//如果栈顶<=price，一直出栈
+            stk.pop();
+        int res=now-(stk.empty()?0:stk.top().first);//最终栈顶位置就是最近的更大位置,减去得到答案
+        stk.push({now,price});//新的一天入栈
+        return res;
+    }
+};

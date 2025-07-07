@@ -1,0 +1,69 @@
+class Solution {
+public:
+    int closedIsland(vector<vector<int>>& grid) {
+        int ret = 0;
+        int ylen = grid.size();
+        int xlen = grid[0].size();
+        for (int i = 0; i < ylen; i++) {
+            for (int j = 0; j < xlen; j++) {
+                if (i == 0 || j == 0 || i == ylen-1 || j == xlen-1) {
+                    bfs(j, i, grid);
+                    //或者dfs(j, i, grid);
+                }
+            }
+        }
+        for (int i = 0; i < ylen; i++) {
+            for (int j = 0; j < xlen; j++) {
+                if (grid[i][j] == 0) {
+                    ret++;
+                    bfs(j, i, grid);
+                    //或者dfs(j, i, grid);
+                }
+            }
+        }
+        return ret;
+    }
+    
+    void dfs(int x, int y, vector<vector<int>>& grid) {
+        int xlen = grid[0].size();
+        int ylen = grid.size();
+        if (x >= xlen || y >= ylen || x < 0 || y < 0 || grid[y][x] == 1) {
+            return;
+        }
+        grid[y][x] = 1;
+        int vx[] = {0, 1, 0, -1};
+        int vy[] = {1, 0, -1, 0};
+        for (int i = 0; i < 4; i++) {
+            dfs(x+vx[i], y+vy[i], grid);
+        }
+    }
+    
+    void bfs(int x, int y, vector<vector<int>>& grid) {
+        if (grid[y][x] == 1) {
+            return;
+        }
+        int xlen = grid[0].size();
+        int ylen = grid.size();
+        queue<vector<int>> q;
+        q.push({x, y});
+        
+        int vx[] = {0, 1, 0, -1};
+        int vy[] = {1, 0, -1, 0};
+        
+        while (!q.empty()) {
+            int curx = q.front()[0];
+            int cury = q.front()[1];
+            q.pop();
+            grid[cury][curx] = 1;
+            for (int i = 0; i < 4; i++) {
+                int nextx = curx+vx[i];
+                int nexty = cury+vy[i];
+                if (nextx >= 0 && nextx < xlen && nexty >= 0 && nexty < ylen) {
+                    if (grid[nexty][nextx] == 0) {
+                        q.push({nextx, nexty});
+                    }
+                }
+            }            
+        }
+    }
+};

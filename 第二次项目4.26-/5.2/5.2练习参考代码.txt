@@ -1,0 +1,228 @@
+-------------------------------------------------练习1-------------------------------------------
+#include<iostream>
+#include<vector>
+
+using namespace std;
+
+/*
+    思路
+    可以直接将1开头的操作，先对数据进行处理一遍
+    也可以找到输入的2开头的操作，然后遍历1开头的操作，然后对输入的索引位置数进行操作
+        第二个操作可以优化，根据1开头的操作里的第二个数，使用桶装载，索引是约数，值是要加的数总和
+        然后遇到2开头的操作里的j位置索引直接O（1）找到要操作加的数就可以了
+    这两个操作可以是交替进行，根据要操作的数据数量选择合适的。     
+
+*/
+
+int n, m;
+vector<long> nums(1, 0);
+vector<pair<pair<int,int>,int>> caozuo;
+
+int main() {
+    cin >> n >> m;
+    for (int i = 0; i < n; ++i) {
+        int num;
+        cin >> num;
+        nums.push_back(num);
+    }
+    int  a, b, c=10000000;
+    while (m--) {
+        cin >> a >> b;
+        if (a == 1) {
+            cin >> c;
+            if (n / b <= 1000) {//寻找合适的阈值
+                int index = b;
+                while (index <= n) {
+                    nums[index] += c;
+                    index += b;
+                }
+            }
+            else {
+                caozuo.push_back(make_pair(make_pair(a, b), c));
+            }
+        }
+        else {
+            long long scapegoat = nums[b];
+            if(caozuo.size())
+            for (int i = 0; i < caozuo.size(); ++i) {
+                if(b%caozuo[i].first.second==0)
+                scapegoat += caozuo[i].second;
+            }
+            cout << scapegoat << endl;
+        }
+    }
+    return 0;
+}
+-------------------------------------------------练习2-------------------------------------------
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+
+using namespace std;
+
+/*
+    方法思路
+    贪心方法
+    区间排序：将居民的区间请求按结束点从小到大排序，如果结束点相同则按起始点从大到小排序。
+        这样处理可以尽可能在右边种树，以便后续区间可以重复利用这些树。
+    树状数组：用于快速查询区间内的树的数量，以确定是否需要补种树。
+    并查集：用于高效查找和标记可以种树的位置，避免重复检查已经种树的位置。    
+*/
+
+struct Interval {
+    int b, e, t;
+    Interval(int b_, int e_, int t_) : b(b_), e(e_), t(t_) {}
+};
+
+struct BIT {
+    vector<int> tree;
+    int n;
+
+    BIT(int size) : n(size), tree(size + 2, 0) {}
+
+    void update(int idx, int delta) {
+        while (idx <= n) {
+            tree[idx] += delta;
+            idx += idx & -idx;
+        }
+    }
+
+    int query(int idx) {
+        int res = 0;
+        while (idx > 0) {
+            res += tree[idx];
+            idx -= idx & -idx;
+        }
+        return res;
+    }
+};
+
+int find(int x, vector<int>& parent) {
+    if (parent[x] != x) {
+        parent[x] = find(parent[x], parent);
+    }
+    return parent[x];
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, h;
+    cin >> n >> h;
+
+    vector<Interval> intervals;
+    for (int i = 0; i < h; ++i) {
+        int b, e, t;
+        cin >> b >> e >> t;
+        intervals.emplace_back(b, e, t);
+    }
+
+    // 按结束点升序排列，结束点相同时按起始点降序排列
+    sort(intervals.begin(), intervals.end(), [](const Interval& a, const Interval& b) {
+        if (a.e != b.e) return a.e < b.e;
+        return a.b > b.b;
+        });
+
+    BIT bit(n);
+    vector<int> parent(n + 2);
+    iota(parent.begin(), parent.end(), 0); // 初始化并查集
+
+    int total = 0;
+    for (const auto& interval : intervals) {
+        int b = interval.b;
+        int e = interval.e;
+        int required = interval.t;
+
+        // 计算当前区间已有的树数量
+        int current = bit.query(e) - bit.query(b - 1);
+        int need = required - current;
+
+        if (need <= 0) continue;
+
+        int remaining = need;
+        int pos = e; // 从右端点开始找可用位置
+
+        while (remaining > 0) {
+            int candidate = find(pos, parent);
+            if (candidate < b) break; // 超出左边界则终止
+
+            // 在该位置种树
+            bit.update(candidate, 1);
+            total++;
+            parent[candidate] = find(candidate - 1, parent); // 连接前一个位置
+            remaining--;
+            pos = candidate - 1; // 继续向左找
+        }
+    }
+
+    cout << total << endl;
+
+    return 0;
+}
+-------------------------------------------------练习3-------------------------------------------
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+
+/*
+    首先，借助 dateToDay 函数把输入的月、日转化为一年中的第几天，这样方便后续统一处理。
+    接着，将这些代表忙碌日期的天数存储在 busyDays 数组并排序。
+    然后，计算最长连续空闲时间。这需要考虑三种情况：年初到第一个忙碌日、忙碌日之间、最后一个忙碌日到年末。在这几种情况中找出空闲天数最多的时间段。
+    最后，按照 “天上一日，人间一年” 的规则，把最长空闲天数转化为天上的时间，使用公式 86400 * maxIdleDays / 366 计算，并四舍五入到整数输出。
+*/
+
+// 每个月的天数，4000 年是闰年
+const int daysInMonth[13] = { 0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+
+// 将日期转换为一年中的第几天
+int dateToDay(int month, int day) {
+    int totalDays = 0;
+    for (int i = 1; i < month; i++) {
+        totalDays += daysInMonth[i];
+    }
+    totalDays += day;
+    return totalDays;
+}
+
+int main() {
+    int n;
+    cin >> n;
+    vector<int> busyDays;
+
+    // 读取必须在人间的日期
+    for (int i = 0; i < n; i++) {
+        int month, day;
+        cin >> month >> day;
+        busyDays.push_back(dateToDay(month, day));
+    }
+
+    // 对必须在人间的日期进行排序
+    sort(busyDays.begin(), busyDays.end());
+
+    // 计算最长连续空闲时间
+    int maxIdleDays = 0;
+    if (busyDays.empty()) {
+        maxIdleDays = 366;
+    }
+    else {
+        // 计算年初到第一个忙碌日的空闲时间
+        maxIdleDays = busyDays[0] - 1;
+        for (int i = 1; i < busyDays.size(); i++) {
+            int idleDays = busyDays[i] - busyDays[i - 1] - 1;
+            maxIdleDays = max(maxIdleDays, idleDays);
+        }
+        // 计算最后一个忙碌日到年末的空闲时间
+        maxIdleDays = max(maxIdleDays, 366 - busyDays.back());
+    }
+
+    // 计算在天上的时间（四舍五入精确到 1 秒）
+    int heavenTime = static_cast<int>(86400.0 * maxIdleDays / 366 + 0.5);
+
+    cout << heavenTime << endl;
+
+    return 0;
+}

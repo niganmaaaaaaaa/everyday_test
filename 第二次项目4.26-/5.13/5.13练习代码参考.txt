@@ -1,0 +1,239 @@
+-----------------------练习1--------------------------
+#include <iostream>
+#include <cstring>
+using namespace std;
+/*
+    坐标计算：首先根据输入的楼间距离，计算每栋楼的坐标。
+    预处理前缀和：计算每个区间内学生数的前缀和以及带权位置的前缀和，以便快速计算某个区间内学生到某一点的带权距离之和。
+    计算最小距离成本：对于每个可能的区间，计算在该区间内建立一所小学的最小带权距离和。这里使用带权中位数来确定最优的学校位置。
+    动态规划：使用动态规划来划分区间，将问题分解为多个子问题，逐步求解前i栋楼建立j所小学的最小带权距离和。
+*/
+const int MAXN = 105;
+const int INF = 0x3f3f3f3f;
+
+int n, k;
+int s[MAXN];
+int d[MAXN];
+int pos[MAXN];
+int sum_s[MAXN][MAXN];
+int sum_pos[MAXN][MAXN];
+int cost[MAXN][MAXN];
+int dp[MAXN][MAXN];
+
+int main() {
+    cin >> n >> k;
+    for (int i = 1; i <= n; ++i)
+        cin >> s[i];
+    for (int i = 1; i < n; ++i)
+        cin >> d[i];
+    pos[1] = 0;
+    for (int i = 2; i <= n; ++i)
+        pos[i] = pos[i - 1] + d[i - 1];
+    // 预处理sum_s和sum_pos
+    for (int i = 1; i <= n; ++i) {
+        sum_s[i][i] = s[i];
+        sum_pos[i][i] = s[i] * pos[i];
+        for (int j = i + 1; j <= n; ++j) {
+            sum_s[i][j] = sum_s[i][j - 1] + s[j];
+            sum_pos[i][j] = sum_pos[i][j - 1] + s[j] * pos[j];
+        }
+    }
+    // 计算cost[i][j]
+    for (int i = 1; i <= n; ++i) {
+        for (int j = i; j <= n; ++j) {
+            int min_cost = INF;
+            for (int m = i; m <= j; ++m) {
+                int sum_s_left = sum_s[i][m];
+                int sum_s_right = (m + 1 > j) ? 0 : sum_s[m + 1][j];
+                int sum_pos_left = sum_pos[i][m];
+                int sum_pos_right = (m + 1 > j) ? 0 : sum_pos[m + 1][j];
+                int total = pos[m] * (sum_s_left - sum_s_right) + (sum_pos_right - sum_pos_left);
+                if (total < min_cost)
+                    min_cost = total;
+            }
+            cost[i][j] = min_cost;
+        }
+    }
+    // 初始化动态规划数组
+    memset(dp, INF, sizeof(dp));
+    for (int j = 1; j <= n; ++j)
+        dp[1][j] = cost[1][j];
+    // 动态规划处理
+    for (int t = 2; t <= k; ++t) {
+        for (int j = t; j <= n; ++j) {
+            dp[t][j] = INF;
+            for (int m = t - 1; m < j; ++m) {
+                if (dp[t - 1][m] + cost[m + 1][j] < dp[t][j])
+                    dp[t][j] = dp[t - 1][m] + cost[m + 1][j];
+            }
+        }
+    }
+    cout << dp[k][n] << endl;
+    return 0;
+}
+-----------------------练习2--------------------------
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <cstring>
+#include <climits>
+using namespace std;
+/*
+    读取城市数、道路数、僵尸城市数及危险距离，接着读取住宿费用和被僵尸占领的城市。
+    BFS从所有僵尸城市出发，计算每个城市到最近僵尸城市的距离，确定危险城市。
+    根据距离确定每个城市的住宿费用，排除僵尸城市。
+    构建不含僵尸城市及其相关边的邻接表。
+    使用优先队列优化的Dijkstra算法，计算从城市1到城市N的最小费用路径，考虑每个节点的住宿费用。
+*/
+const int MAXN = 100005;
+
+vector<int> adj[MAXN];
+bool is_zombie[MAXN];
+int dist[MAXN];
+long long cost[MAXN];
+long long min_cost[MAXN];
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    int N, M, K, S;
+    cin >> N >> M >> K >> S;
+    int P, Q;
+    cin >> P >> Q;
+
+    // 读取僵尸城市并标记
+    memset(is_zombie, false, sizeof(is_zombie));
+    queue<int> zombie_q;
+    for (int i = 0; i < K; ++i) {
+        int c;
+        cin >> c;
+        is_zombie[c] = true;
+        zombie_q.push(c);
+    }
+
+    // 读取边并构建邻接表
+    for (int i = 0; i < M; ++i) {
+        int a, b;
+        cin >> a >> b;
+        adj[a].push_back(b);
+        adj[b].push_back(a);
+    }
+
+    // 多源BFS计算每个节点到最近僵尸城市的距离
+    memset(dist, -1, sizeof(dist));
+    queue<int> bfs_q;
+    while (!zombie_q.empty()) {
+        int u = zombie_q.front();
+        zombie_q.pop();
+        dist[u] = 0;
+        bfs_q.push(u);
+    }
+
+    while (!bfs_q.empty()) {
+        int u = bfs_q.front();
+        bfs_q.pop();
+        for (int v : adj[u]) {
+            if (dist[v] == -1) {
+                dist[v] = dist[u] + 1;
+                bfs_q.push(v);
+            }
+        }
+    }
+
+    // 计算每个节点的住宿费用
+    for (int u = 1; u <= N; ++u) {
+        if (u == 1 || u == N) {
+            cost[u] = 0;
+        }
+        else if (is_zombie[u]) {
+            cost[u] = LLONG_MAX; // 标记为不可达
+        }
+        else {
+            if (dist[u] != -1 && dist[u] <= S) {
+                cost[u] = Q;
+            }
+            else {
+                cost[u] = P;
+            }
+        }
+    }
+
+    // 构建过滤后的邻接表，排除僵尸城市
+    vector<int> filtered_adj[MAXN];
+    for (int u = 1; u <= N; ++u) {
+        if (is_zombie[u]) continue;
+        for (int v : adj[u]) {
+            if (!is_zombie[v]) {
+                filtered_adj[u].push_back(v);
+            }
+        }
+    }
+
+    // Dijkstra算法求最小费用
+    fill(min_cost, min_cost + N + 1, LLONG_MAX);
+    min_cost[1] = 0;
+    priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<>> pq;
+    pq.emplace(0, 1);
+
+    while (!pq.empty()) {
+        auto [current_cost, u] = pq.top();
+        pq.pop();
+
+        if (u == N) {
+            cout << current_cost << endl;
+            return 0;
+        }
+
+        if (current_cost > min_cost[u]) continue;
+
+        for (int v : filtered_adj[u]) {
+            long long next_cost = current_cost + (v == N ? 0 : cost[v]);
+            if (next_cost < min_cost[v]) {
+                min_cost[v] = next_cost;
+                pq.emplace(next_cost, v);
+            }
+        }
+    }
+
+    // 输入保证有解，无需处理无解情况
+    return 0;
+}
+-----------------------练习3--------------------------
+#include<iostream>
+#include<string.h>
+#include<algorithm>
+
+using namespace std;
+
+int map[1001][1001],n,m;
+/*
+	直接暴力解决了
+		定义二维数组，每个值为0
+		在每次输入左上右下坐标时，就根据这个范围，来让范围内坐标值++
+	最后直接根据n值，输出最后二维数组值。
+
+*/
+
+int main() {
+	cin >> n >> m;
+	memset(map, 0, sizeof(int) * 1001 * 1001);
+	for (int i = 0; i < m; ++i) {
+		int x, y,x1,y1;
+		cin >> x>>y>>x1>>y1;
+		for (int j = x; j <= x1; ++j) {
+			for (int k = y; k <= y1; ++k) {
+				map[j][k]++;
+			}
+		}
+	}
+
+	for (int i = 1; i <= n; ++i) {
+		for (int j = 1; j <= n; ++j) {
+			cout << map[i][j] << ' ';
+		}
+		cout << endl;
+	}
+
+	return 0;
+}

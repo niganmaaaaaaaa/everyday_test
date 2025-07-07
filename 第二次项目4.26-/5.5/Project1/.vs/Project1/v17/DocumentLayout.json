@@ -1,0 +1,41 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "E:\\\u4EE3\u7801\u5B66\u4E602\\01\u661F\u7403\u9879\u76EE\\\u6BCF\u65E5\u9898\u76EE\\\u7B2C\u4E8C\u6B21\u9879\u76EE4.26-\\5.5\\Project1\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{F71ED33C-F5C0-4381-BDF4-04E61AF5C1AE}|Project1\\Project1.vcxproj|E:\\\u4EE3\u7801\u5B66\u4E602\\01\u661F\u7403\u9879\u76EE\\\u6BCF\u65E5\u9898\u76EE\\\u7B2C\u4E8C\u6B21\u9879\u76EE4.26-\\5.5\\Project1\\Project1\\\u85AF\u67615.5\u7EC3\u4E601.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{F71ED33C-F5C0-4381-BDF4-04E61AF5C1AE}|Project1\\Project1.vcxproj|solutionrelative:Project1\\\u85AF\u67615.5\u7EC3\u4E601.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 1,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{1c4feeaa-4718-4aa9-859d-94ce25d182ba}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "\u85AF\u67615.5\u7EC3\u4E601.cpp",
+              "DocumentMoniker": "E:\\\u4EE3\u7801\u5B66\u4E602\\01\u661F\u7403\u9879\u76EE\\\u6BCF\u65E5\u9898\u76EE\\\u7B2C\u4E8C\u6B21\u9879\u76EE4.26-\\5.5\\Project1\\Project1\\\u85AF\u67615.5\u7EC3\u4E601.cpp",
+              "RelativeDocumentMoniker": "Project1\\\u85AF\u67615.5\u7EC3\u4E601.cpp",
+              "ToolTip": "E:\\\u4EE3\u7801\u5B66\u4E602\\01\u661F\u7403\u9879\u76EE\\\u6BCF\u65E5\u9898\u76EE\\\u7B2C\u4E8C\u6B21\u9879\u76EE4.26-\\5.5\\Project1\\Project1\\\u85AF\u67615.5\u7EC3\u4E601.cpp",
+              "RelativeToolTip": "Project1\\\u85AF\u67615.5\u7EC3\u4E601.cpp",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAANAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2025-05-05T15:33:20.108Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

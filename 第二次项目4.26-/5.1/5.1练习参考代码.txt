@@ -1,0 +1,169 @@
+------------------------------------------练习1------------------------------------
+/*
+	首先可以用搜索，然后这个内存和时间都爆掉了，只过了两个，所以不推荐
+	接下来就是这几天做的最多的动态规划思路（借鉴题解里的单调队列写法）：
+
+	首先明确 精灵只能从[i+l,i+r]转移过来 那么状态转移方程 ：
+	dp[i]=max(dp[k]) (k∈[i+l,i+r]) +a[i]; 因为题意说可以由大于n的数转移 那么就新增一个点 dp[n+1]=0；(主要还是避免负数)
+	明确一下 q为单调队列 维护的是从[i+l,i+r] dp[k]的最大值 （递减的）
+	首先dp[n-l+1]~dp[n]只能等于a[i] 先预处理一下
+	然后枚举i从n+1到l每次用dp[i]来更新dp[i-l] 然后把dp[i-l]打入单调队列 同时进行判断 如果i-1中右端点发生改变 那么就在i这个循环的末尾进行单调队列弹出队首元素
+*/
+#include<iostream>
+#include<cstdio>
+using namespace std;
+#define N 200001
+int dp[N], a[N], n, l, r;
+int q[N][2], head = 1, tail = 0;
+int main()
+{
+    scanf("%d%d%d", &n, &l, &r);
+    if (l > r) swap(l, r);//防止l比r大
+    for (int i = 0; i <= n; i++) scanf("%d", &a[i]);
+    for (int i = n; i >= n - l + 1; i--)
+    {
+        dp[i] = a[i];
+    }
+    for (int i = n + 1; i >= l; i--)
+    {
+        while (tail >= head && dp[i] > q[tail][0]) tail--;
+        tail++;
+        q[tail][0] = dp[i];
+        q[tail][1] = i;
+        //以上为将dp[i]打入单调队列
+        dp[i - l] = q[head][0] + a[i - l];//更新
+        if (i + r == q[head][1]) head++;//弹出
+    }
+    cout << dp[0];
+}
+//可怜被爆掉的搜索
+#include<iostream>
+#include<vector>
+#include<map>
+
+using namespace std;
+
+long long  n, l, r;
+vector<long long> nums;
+//map<long long, long long > sum;
+long long Max=-99999999;
+
+void find(int i,long long count1) {
+	if (i > n) {
+		if (count1 > Max) {
+			Max = count1;
+		}
+		return;
+	}
+	count1+= nums[i];
+	for (int j = l; j <= r; ++j) {
+		find(i + j,count1);
+	}
+}
+
+int main() {
+	cin >> n >> l >> r;
+	for (int i = 0; i <= n; ++i) {
+		long long a;
+		cin >> a;
+		nums.push_back(a);
+	}
+	find(0, 0);
+	cout << Max;
+
+	return 0;
+}
+--------------------------------------练习2------------------------------------------------------
+/*
+	使用类似于分治的思想，将0作为分界线，隔开数据，找定范围（范围内都是大于0的数）
+		找到最小的数，该范围内的数都减去该数
+		接着按照这个规律，继续寻找符合规定的范围（范围内都是大于0的数），然后找最小数.......
+
+		那么就不断地分解所有数据范围
+	直到数据最后都是0，就结束
+	使用双指针寻找这个范围
+	
+*/
+#include<iostream>
+#include<vector>
+
+using namespace std;
+
+long long  n,count1=0,type,Max;
+vector<long long> nums(1,0);
+
+void count2(int l, int r) {
+	long long  Min = 9999999;
+	for (int i = l; i <= r; ++i) {
+		Min = min(Min, nums[i]);
+	}
+	for (int i = l; i <= r; ++i) {
+		nums[i] -= Min;
+	}
+	count1 += Min;
+}
+
+int main() {
+	cin >> n;
+	for (int k = 1; k <= n; ++k) {
+		int a;
+		cin >> a;
+		nums.push_back(a);
+	}
+	nums.push_back(0);
+	long long i=1, j=i;
+
+	while (1) {
+		i = 1;
+		while(nums[i] < 1&&i<=n) {
+			++i;
+		}
+		j = i;
+		while (nums[j]>0&&j<=n) {
+			++j;
+		}
+		if (i >n) {//说明已经解决完了
+			break;
+		}
+		count2(i, --j);
+	}
+
+	cout << count1;
+	return 0;
+}
+--------------------------------------练习3------------------------------------------------------
+/*
+	跟算法沾边的也就是二分了
+		题目分析纯数学问题和生活实践
+		不然题目都看不懂，（没什么生活经验，在题解里才明白题意）
+	那么就直接二分寻找这个数就可以了，注意一下这个数据范围，问题就解决了。
+*/
+#include<iostream>
+using namespace std;
+double a, b, c, l, r;
+int main()
+{
+    scanf("%lf%lf%lf", &a, &b, &c);
+    l = 0;
+    r = 1000;
+    while (l < r)
+    {
+        double e, f, mid;
+        mid = (l + r) / 2;
+        e = mid / 100 + 1;
+        f = 0;
+        for (int i = 0; i < c; i++)
+        {
+            f += b / e;
+            e = e * (mid / 100 + 1);
+        }
+        if (f > a)
+            l = mid + 0.00001;
+        else
+            r = mid - 0.00001;
+    }
+    if (l <= 0)
+        printf("0.0");
+    else
+        printf("%.1lf", r);
+}

@@ -1,0 +1,104 @@
+--------------------------练习1-----------------------------
+/**
+ * Definition for a binary tree node.
+ * struct TreeNode {
+ *     int val;
+ *     TreeNode *left;
+ *     TreeNode *right;
+ *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+ *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+ *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+ * };
+ */
+class Solution {
+    vector<TreeNode*> a,b;
+    bool check(){
+        while(1){
+            for(int i=0;i<a.size();++i){
+                if(a[i]->right!=NULL&&a[i]->left==NULL){//右单腿直接错误
+                    return false;
+                }
+                if((a[i]->left!=NULL&&a[i]->right==NULL)||(a[i]->left==NULL&&a[i]->right==NULL)){//左单腿或叶子结点,终点之一
+                    if(a[i]->left!=NULL&&a[i]->right==NULL)//左单腿子结点也要判断
+                    b.push_back(a[i]->left);
+                    for(int j=i+1;j<a.size();++j){//判断该层后面结点是不是空结点
+                        if(a[j]->left!=NULL||a[j]->right!=NULL){
+                            return false;
+                        }
+                    }
+                    for(int j=0;j<b.size();++j){//判断下一层结点有无子结点
+                        if(b[j]->left!=NULL||b[j]->right!=NULL){
+                            return false;
+                        }
+                    }
+                    return true;
+                }
+                b.push_back(a[i]->left);
+                b.push_back(a[i]->right);
+            }//a遍历完了
+            if(b.empty()) return true;
+            a=b;//队列赋值
+            b.clear();//清空子结点队列
+        }
+    }
+public:
+    bool isCompleteTree(TreeNode* root) {
+        if(root==NULL) return true;
+        a.push_back(root);
+        return check();
+    }
+};
+--------------------------练习2-----------------------------
+/**
+ * Definition for a binary tree node.
+ * struct TreeNode {
+ *     int val;
+ *     TreeNode *left;
+ *     TreeNode *right;
+ *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+ *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+ *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+ * };
+ */
+class Solution {
+    int sum[101];
+    vector<int> a;
+    void right(TreeNode* curr,int cengshu){
+        if(curr==NULL){
+        }else{
+            if(sum[cengshu]==0){
+                a.push_back(curr->val);
+                sum[cengshu]=1;
+            }
+            right(curr->right,cengshu+1);
+            right(curr->left,cengshu+1);
+        }
+
+    }
+public:
+    vector<int> rightSideView(TreeNode* root) {
+        memset(sum,0,sizeof(int)*101);
+        if(root==NULL) return a;
+        a.push_back(root->val);
+       right(root->right,2); 
+       right(root->left,2);
+       return a;
+    }
+};
+--------------------------练习3-----------------------------
+class Solution {
+public:
+    vector<vector<string>> groupAnagrams(vector<string>& strs) {
+        unordered_map<string, vector<string>> mp;
+        for (string& str: strs) {
+            string key = str;
+            sort(key.begin(), key.end());
+            mp[key].emplace_back(str);
+        }
+        vector<vector<string>> ans;
+        for (auto it = mp.begin(); it != mp.end(); ++it) {
+            ans.emplace_back(it->second);
+        }
+        return ans;
+    }
+};

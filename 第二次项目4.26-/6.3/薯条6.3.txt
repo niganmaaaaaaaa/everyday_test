@@ -1,0 +1,31 @@
+#include <vector>
+using namespace std;
+
+class Solution {
+public:
+    vector<int> corpFlightBookings(vector<vector<int>>& bookings, int n) {
+        // 创建差分数组，大小为 n+2（索引0到n+1），初始化为0
+        vector<int> diff(n + 2, 0);
+        
+        // 遍历每个预订记录，更新差分数组
+        for (const auto& booking : bookings) {
+            int first = booking[0];
+            int last = booking[1];
+            int seats = booking[2];
+            diff[first] += seats;
+            if (last + 1 <= n) {
+                diff[last + 1] -= seats;
+            }
+        }
+        
+        // 计算前缀和得到每个航班的座位总数
+        vector<int> ans(n);
+        int current = 0;
+        for (int i = 1; i <= n; ++i) {
+            current += diff[i];
+            ans[i - 1] = current;
+        }
+        
+        return ans;
+    }
+};

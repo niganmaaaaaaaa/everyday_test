@@ -1,0 +1,58 @@
+class Solution {
+public:
+    const static int N=1e3+10,INF=0x3f3f3f3f;
+    int edges[N][N];
+    int dist[N];
+    bool st[N];
+
+    //找出最小生成树
+    int prim(int n)
+    {
+        int ret=0;
+        dist[0]=0;
+        for(int i=0;i<n;i++)
+        {
+            int t=N-1;
+            for(int j=0;j<n;j++)
+            {
+                if(!st[j] && dist[j]<dist[t])
+                {
+                    t=j;
+                }
+            }
+
+            if(dist[t]==INF) return INF;
+            st[t]=true;
+            ret+=dist[t];
+
+            for(int j=0;j<n;j++)
+            {
+                dist[j]=min(edges[t][j],dist[j]);
+            }
+        }
+        return ret;
+    }
+
+    int minCostConnectPoints(vector<vector<int>>& points) 
+    {
+        memset(edges,0x3f,sizeof edges);
+        memset(dist,0x3f,sizeof dist);
+
+        int n=points.size();
+        //建图
+        for(int i=0;i<n;i++)
+        {
+            for(int j=i+1;j<n;j++)
+            {
+                int n=abs(points[i][0]-points[j][0])+abs(points[i][1]-points[j][1]);
+                edges[i][j]=n;
+                edges[j][i]=n;
+            }
+        }
+        
+        int ret=prim(n);
+        if(ret==INF) return -1;
+        else return ret;
+    }
+};
+                                                                                         

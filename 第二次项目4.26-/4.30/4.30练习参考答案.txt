@@ -1,0 +1,163 @@
+--------------------------------------------------练习1-------------------------------------------
+#include <iostream>
+#include <vector>
+#include <numeric>
+using namespace std;
+/*
+    问题分析：kkksc03需要复习四科，每科有若干题目，每个题目需要一定时间。
+    他可以用左右脑同时处理同一科的两道题，求完成所有科目的最短时间。对于每科，我们需要将题目分成两组，使得完成时间最长的那个组的用时最短。
+    关键思路：对于每一科，题目可以看作一个子集和问题，即将题目分成两组，使得两组的时间之和尽可能接近。这样，最大时间即为该科的最短完成时间。
+    动态规划解法：使用动态规划来求解每科的最优分组。对于每科的总时间sum，寻找一个子集的和t，使得t尽可能接近sum的一半。
+        使用布尔数组dp记录可能达到的子集和，最后找到最大的可行t，该科的最短时间即为sum - t。
+*/
+int main() {
+    int s[4];
+    cin >> s[0] >> s[1] >> s[2] >> s[3];
+    int total_time = 0;
+
+    for (int i = 0; i < 4; ++i) {
+        vector<int> times(s[i]);
+        for (int j = 0; j < s[i]; ++j) {
+            cin >> times[j];
+        }
+        int sum = accumulate(times.begin(), times.end(), 0);
+        int max_half = sum / 2;
+        vector<bool> dp(max_half + 1, false);
+        dp[0] = true;
+
+        for (int a : times) {
+            for (int j = max_half; j >= a; --j) {
+                if (dp[j - a]) {
+                    dp[j] = true;
+                }
+            }
+        }
+
+        int best = 0;
+        for (int j = max_half; j >= 0; --j) {
+            if (dp[j]) {
+                best = j;
+                break;
+            }
+        }
+        total_time += (sum - best);
+    }
+
+    cout << total_time << endl;
+    return 0;
+}
+--------------------------------------------------练习2-------------------------------------------
+#include <iostream>
+using namespace std;
+
+/*
+    使用二维数组maze标记障碍物位置，二维数组vis记录访问状态。
+    DFS算法：从起点开始，递归尝试四个方向的移动。每次移动前检查是否越界、是否遇到障碍物、是否已访问过该位置。到达终点时计数器加一，回溯时重置访问状态。
+    边界处理：特别注意起点和终点重合的情况，以及终点被障碍物阻挡的情况。
+*/
+
+int n, m, t;
+int sx, sy, fx, fy;
+int maze[6][6] = { 0 }; // 迷宫，1表示障碍
+bool vis[6][6] = { false }; // 访问标记
+int ans = 0;
+
+// 方向数组：上下左右
+int dx[] = { -1, 1, 0, 0 };
+int dy[] = { 0, 0, -1, 1 };
+
+void dfs(int x, int y) {
+    if (x == fx && y == fy) { // 到达终点
+        ans++;
+        return;
+    }
+    for (int i = 0; i < 4; i++) { // 尝试四个方向
+        int nx = x + dx[i];
+        int ny = y + dy[i];
+        // 检查新坐标是否合法且可走
+        if (nx >= 1 && nx <= n && ny >= 1 && ny <= m
+            && maze[nx][ny] == 0 && !vis[nx][ny]) {
+            vis[nx][ny] = true;
+            dfs(nx, ny);
+            vis[nx][ny] = false; // 回溯
+        }
+    }
+}
+
+int main() {
+    cin >> n >> m >> t;
+    cin >> sx >> sy >> fx >> fy;
+    // 设置障碍物
+    for (int i = 0; i < t; i++) {
+        int x, y;
+        cin >> x >> y;
+        maze[x][y] = 1;
+    }
+    // 终点是障碍物直接返回0
+    if (maze[fx][fy] == 1) {
+        cout << 0 << endl;
+        return 0;
+    }
+    vis[sx][sy] = true; // 起点已访问
+    dfs(sx, sy); // 开始搜索
+    cout << ans << endl;
+    return 0;
+}
+--------------------------------------------------练习3-------------------------------------------
+#include <iostream>
+#include <vector>
+using namespace std;
+/*
+    check 函数用于检查在给定的最大值 max_sum 下，能否将数列分成不超过 m 段。
+		它遍历数列，累加每段的和，若超过 max_sum 则开启新的一段。
+	binary_search 函数：使用二分查找来确定每段和的最大值的最小值。左边界 left 初始化为数列中的最大值，右边界 right 初始化为数列的总和。
+		在二分查找过程中，调用 check 函数判断中间值是否满足条件，根据结果更新左右边界。
+*/
+
+// 检查在给定的最大值下，能否将数列分成不超过 m 段
+bool check(const vector<int>& a, int m, int max_sum) {
+    int sum = 0;
+    int segments = 1;
+    for (int num : a) {
+        if (sum + num > max_sum) {
+            segments++;
+            sum = num;
+        }
+        else {
+            sum += num;
+        }
+    }
+    return segments <= m;
+}
+
+// 二分查找每段和的最大值的最小值
+int binary_search(const vector<int>& a, int m) {
+    int left = 0, right = 0;
+    // 确定二分查找的左右边界
+    for (int num : a) {
+        left = max(left, num);
+        right += num;
+    }
+    while (left < right) {
+        int mid = left + (right - left) / 2;
+        if (check(a, m, mid)) {
+            right = mid;
+        }
+        else {
+            left = mid + 1;
+        }
+    }
+    return left;
+}
+
+int main() {
+    int n, m;
+    cin >> n >> m;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    int result = binary_search(a, m);
+    cout << result << endl;
+    return 0;
+}

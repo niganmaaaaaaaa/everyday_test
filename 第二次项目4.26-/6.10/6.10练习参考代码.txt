@@ -1,0 +1,221 @@
+----------------------练习1-------------------------
+/*
+	使用反向图（原图边的方向反转）进行拓扑排序，计算每个节点的上游节点数（包括自身）。
+	计算下游节点数（down数组）：使用原图进行拓扑排序，计算每个节点的下游节点数（包括自身）。
+	计算总贡献：遍历原图的每条边，将每条边的贡献（up[u] * down[v]）累加得到答案。
+*/
+
+#include <iostream>
+#include <vector>
+#include <queue>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int n;
+    cin >> n;
+    vector<vector<int>> graph(n + 1);
+    vector<vector<int>> graph_rev(n + 1);
+    vector<int> in_degree(n + 1, 0);
+    vector<int> out_degree(n + 1, 0);
+
+    for (int i = 0; i < n - 1; i++) {
+        int u, v;
+        cin >> u >> v;
+        graph[u].push_back(v);
+        graph_rev[v].push_back(u);
+        out_degree[u]++;
+        in_degree[v]++;
+    }
+
+    vector<long long> down(n + 1, 0);
+    vector<long long> sum_child_down(n + 1, 0);
+    vector<int> out_deg = out_degree;
+    queue<int> q;
+    for (int i = 1; i <= n; i++) {
+        if (out_deg[i] == 0) {
+            down[i] = 1;
+            q.push(i);
+        }
+    }
+
+    while (!q.empty()) {
+        int u = q.front();
+        q.pop();
+        for (int v : graph_rev[u]) {
+            out_deg[v]--;
+            sum_child_down[v] += down[u];
+            if (out_deg[v] == 0) {
+                down[v] = 1 + sum_child_down[v];
+                q.push(v);
+            }
+        }
+    }
+
+    vector<long long> up(n + 1, 0);
+    vector<long long> sum_child_rev(n + 1, 0);
+    vector<int> r_out_deg = in_degree;
+    queue<int> q2;
+    for (int i = 1; i <= n; i++) {
+        if (r_out_deg[i] == 0) {
+            up[i] = 1;
+            q2.push(i);
+        }
+    }
+
+    while (!q2.empty()) {
+        int u = q2.front();
+        q2.pop();
+        for (int v : graph[u]) {
+            r_out_deg[v]--;
+            sum_child_rev[v] += up[u];
+            if (r_out_deg[v] == 0) {
+                up[v] = 1 + sum_child_rev[v];
+                q2.push(v);
+            }
+        }
+    }
+
+    long long ans = 0;
+    for (int u = 1; u <= n; u++) {
+        for (int v : graph[u]) {
+            ans += up[u] * down[v];
+        }
+    }
+    cout << ans << endl;
+
+    return 0;
+}
+----------------------练习2-------------------------
+/*
+初始化 dp 数组，大小为 2 * base + 1（覆盖 x 总和从 -100000 到 100000），并将 dp[base] 设为 0（表示空子序列）。
+	对于每个数对 (x, y)，更新 new_dp 数组，考虑是否选择当前数对，并更新可能的 x 总和和 y 总和的最大值。
+状态收：
+	遍历 dp 数组，收集所有有效状态（dp[s] 不为负无穷），计算每个状态的 f 值（y 总和减 x 总和），并存储为 State 结构体。
+	按 f 值对状态数组进行排序。
+构建前缀和后缀数组：
+	suffix_s 数组存储从当前索引到末尾的最大 x 总和。
+	prefix_dp 数组存储从开头到当前索引的最大 y 总和。
+查询处理：
+	对于每个查询 (a, b)，计算 C0 = a - b。
+	使用二分搜索在排序后的状态数组中找到第一个 f >= C0 的索引 idx1。
+	候选值1：若 idx1 有效，则计算 a + suffix_s[idx1]。
+	候选值2：若 idx1 > 0，则计算 b + prefix_dp[idx1 - 1]。
+	最终结果为两个候选值的最大值。
+*/
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+struct State {
+    long long f;
+    long long s_val;
+    long long dp_val;
+    State(long long f0, long long s0, long long d0) : f(f0), s_val(s0), dp_val(d0) {}
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int n;
+    cin >> n;
+    const long long base = 100000;
+    const long long range_size = 2 * base + 1;
+    vector<long long> dp(range_size, LLONG_MIN);
+    dp[base] = 0;
+
+    for (int i = 0; i < n; i++) {
+        long long x, y;
+        cin >> x >> y;
+        vector<long long> new_dp = dp;
+        for (int s = 0; s < range_size; s++) {
+            if (dp[s] == LLONG_MIN) continue;
+            long long ns = s + x;
+            if (ns < 0 || ns >= range_size) continue;
+            if (dp[s] + y > new_dp[ns]) {
+                new_dp[ns] = dp[s] + y;
+            }
+        }
+        dp = new_dp;
+    }
+
+    vector<State> P;
+    for (int s = 0; s < range_size; s++) {
+        if (dp[s] == LLONG_MIN) continue;
+        long long s_val = s - base;
+        long long dp_val = dp[s];
+        long long f_val = dp_val - s_val;
+        P.push_back(State(f_val, s_val, dp_val));
+    }
+
+    sort(P.begin(), P.end(), [](const State& a, const State& b) {
+        return a.f < b.f;
+    });
+
+    int len = P.size();
+    vector<long long> suffix_s(len, LLONG_MIN);
+    vector<long long> prefix_dp(len, LLONG_MIN);
+
+    if (len > 0) {
+        suffix_s[len-1] = P[len-1].s_val;
+        for (int i = len-2; i >= 0; i--) {
+            suffix_s[i] = max(suffix_s[i+1], P[i].s_val);
+        }
+
+        prefix_dp[0] = P[0].dp_val;
+        for (int i = 1; i < len; i++) {
+            prefix_dp[i] = max(prefix_dp[i-1], P[i].dp_val);
+        }
+    }
+
+    int m;
+    cin >> m;
+    while (m--) {
+        long long a, b;
+        cin >> a >> b;
+        long long C0 = a - b;
+
+        int idx1 = lower_bound(P.begin(), P.end(), C0, 
+            [](const State& st, long long val) { 
+                return st.f < val; 
+            }) - P.begin();
+
+        long long candidate1 = LLONG_MIN;
+        if (idx1 < len) {
+            candidate1 = a + suffix_s[idx1];
+        }
+
+        long long candidate2 = LLONG_MIN;
+        if (idx1 > 0) {
+            candidate2 = b + prefix_dp[idx1-1];
+        }
+
+        long long ans = max(candidate1, candidate2);
+        cout << ans << '\n';
+    }
+
+    return 0;
+}
+----------------------练习3-------------------------
+/*
+	简短有力
+	题解：https://www.luogu.com.cn/article/3hl3nine
+*/
+#include<bits/stdc++.h>
+using namespace std;
+int n,m,k,ans;
+int main(){
+    cin>>n>>m>>k;//不多说，输入
+    cout<<n*m<<endl;//最小染色数
+    for(int i=1;i<=n;i++){
+	    ans=(k-i+1+n)%n;
+        for(int j=1;j<=m;j++){
+            cout<<i<<" "<<j<<" "<<ans%k+1<<"\n";//边做边输出答案
+	        ans++;
+	    }
+    }
+    return 0;
+}

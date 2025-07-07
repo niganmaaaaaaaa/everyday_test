@@ -1,0 +1,189 @@
+-------------------------练习1----------------------
+/*
+	只有前两组过了，其他组超时了，推荐去看题解
+	https://www.luogu.com.cn/article/nvhe02cj
+	这个代码简单思路(超时这个)：
+		使用倍增法预处理每个节点的 LCA 信息，以便快速查询任意两个节点的 LCA。
+		对于每个点对 (x,y)，计算它们的 LCA (u)，并检查 a [u] 是否同时整除 a [x] 和 a [y]。
+		使用预计算的 LCA 信息，快速判断每个点对是否满足条件。
+		通过深度优先搜索初始化每个节点的父节点和深度信息，然后使用倍增法预处理每个节点的 2^k 级祖先。
+		使用预处理的信息，通过二进制提升法快速查询任意两个节点的 LCA。
+		枚举：对于每个点对 (x,y)，计算它们的 LCA，并检查 LCA 的权值是否同时整除 x 和 y 的权值。如果是，则计数器加一。
+*/
+#include <iostream>
+#include <vector>
+using namespace std;
+
+const int MAXN = 1e5 + 5;
+const int LOGN = 20;
+
+int n;
+vector<int> a(MAXN);
+vector<int> adj[MAXN];
+int up[MAXN][LOGN];
+int depth[MAXN];
+
+// 预处理LCA
+void dfs(int u, int parent) {
+    up[u][0] = parent;
+    depth[u] = depth[parent] + 1;
+    for (int i = 1; i < LOGN; ++i) {
+        up[u][i] = up[up[u][i - 1]][i - 1];
+    }
+    for (int v : adj[u]) {
+        if (v != parent) {
+            dfs(v, u);
+        }
+    }
+}
+
+// 查询LCA
+int lca(int u, int v) {
+    if (depth[u] < depth[v]) swap(u, v);
+    for (int i = LOGN - 1; i >= 0; --i) {
+        if (depth[u] - (1 << i) >= depth[v]) {
+            u = up[u][i];
+        }
+    }
+    if (u == v) return u;
+    for (int i = LOGN - 1; i >= 0; --i) {
+        if (up[u][i] != up[v][i]) {
+            u = up[u][i];
+            v = up[v][i];
+        }
+    }
+    return up[u][0];
+}
+
+int main() {
+    cin >> n;
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i];
+    }
+    for (int i = 0; i < n - 1; ++i) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+    dfs(1, 0); // 预处理LCA信息
+
+    int ans = 0;
+    // 枚举所有点对 (x, y)
+    for (int x = 1; x <= n; ++x) {
+        for (int y = 1; y <= n; ++y) {
+            int ancestor = lca(x, y);
+            if (a[x] % a[ancestor] == 0 && a[y] % a[ancestor] == 0) {
+                ans++;
+            }
+        }
+    }
+    cout << ans << endl;
+    return 0;
+}
+-------------------------练习2----------------------
+#include<iostream>
+#include<vector>
+#include<algorithm>
+/*
+	贪心
+	存储：搞一个标准，每个勇士能抗的次数*他的攻击力
+		  按照这个标准进行存储，并排序
+	按照贪心的思路，例如最后需要5个英雄，那么出场顺序	1 2 3 4 5
+		 取数组的后五个数，相对应的依次是排序后的数组的倒数第5个数*位数1，倒数第4个数*位数2....，并且最后的攻击总和大于等于hp
+		 按照这个想法，首先是1个数，也就是最大的那个数进行操作，如果攻击总和小于hp，那么就增加人数，依次往后排
+操作步骤	1		2		3		4		5	位次
+			max
+			max-1	max
+			max-2	max-1	max
+			.........
+			注：数组最大值索引->max
+*/
+using namespace std;
+long long hp, atk, a, h, suma = 0, n;
+vector<long long> sums;
+int main() {
+	cin >> n;
+	cin >> atk >> hp;
+	for (int i = 0; i < n; ++i) {
+		cin >> a >> h;
+		long long res = h / atk;
+		if (h % atk != 0) {
+			sums.push_back((res + 1) * a);
+		}
+		else {
+			sums.push_back(res * a);
+		}
+	}
+	sort(sums.begin(), sums.end());
+	long long count1 = 1, mid = n / 2;
+	while (suma < hp) {
+		if (count1 > sums.size() - 1) {
+			cout << "false";
+			return 0;
+		}
+		suma = 0;
+		long long xishu = 1;
+		for (int i = sums.size() - count1; i < sums.size(); ++i) {
+			suma += sums[i] * xishu;
+			xishu++;
+		}
+		count1++;
+
+	}
+	cout << count1 - 1;
+	return 0;
+}
+-------------------------练习3----------------------
+#include<iostream>
+
+/*
+    借鉴的题解
+        我感觉有点繁杂，不搞了，看题解吧
+    先根据规律将数据变成中间形态，期间要寻找临界点(细节在这里体现)
+    中间形态是一维数组形式，然后再根据螺旋矩阵规律输出到另一个二维数组就可以了
+*/
+using namespace std;
+int dx[4] = { 0,1,0,-1 }, dy[4] = { 1,0,-1,0 };//定义方向数组
+char a[505][505], b[250005], c[505][505];//b数组为链
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0); cout.tie(0);
+    int n; cin >> n;
+    for (int i = 1; i <= n; i++) {
+        for (int j = 1; j <= n; j++) {
+            cin >> a[i][j];  //读入
+        }
+    }
+    int i = 1, j = 1, f = 1;//定义坐标和方向变量
+    for (int k = 1; k <= n * n; k++) {
+        b[k] = a[i][j];
+        i -= f, j += f;//每回更新坐标
+        if (j > n) j = n, i += 2, f = -f;//如果j大于n，i增加2，j变回n，更改方向
+        else if (i > n) i = n, j += 2, f = -f;//如果i大于n，j增加2，i变回n，更改方向
+        else if (i < 1) i = 1, f = -f;//如果i小于n，i变回1，更改方向
+        else if (j < 1) j = 1, f = -f;//如果j小于1，j变回1，更改方向
+        //注意顺序不能改
+    }//蛇形矩阵
+    for (int i = 1; i <= n; i++) {
+        for (int j = 1; j <= n; j++) {
+            c[i][j] = '@';//初始化
+        }
+    }
+    c[1][n + 1] = '!';//方便判角
+    c[n + 1][n] = '!';//方便判角
+    c[0][n] = '!';//方便判角
+    i = 1, j = 1, f = 0;//重置坐标
+    for (int k = 1; k <= n * n; k++) {
+        c[i][j] = b[k];//赋值
+        if (c[i + dx[f]][j + dy[f]] == '!' || c[i + dx[f]][j + dy[f]] != '@') f = (f + 1) % 4;//更新方向数组的索引。
+        i += dx[f], j += dy[f];//更新坐标
+    }
+    for (int i = 1; i <= n; i++) {
+        for (int j = 1; j <= n; j++) {
+            cout << c[i][j];//输出
+        }
+        cout << '\n';
+    }
+    return 0;//华丽结束
+}

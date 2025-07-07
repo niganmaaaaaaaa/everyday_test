@@ -1,0 +1,29 @@
+class Solution {
+public:
+    vector<string> letterCombinations(string digits) {
+        if(digits.size()==0){
+            vector<string> v;
+            return v;
+        }
+
+        string helper[]={"abc","def","ghi","jkl","mno","pqrs","tuv","wxyz"};
+        int helper1[]={3,3,3,3,3,4,3,4};
+        vector<string> result;
+        int number=1;
+        for(int i=0;i<digits.length();i++){
+            number*=helper1[digits[i]-'2'];
+        }
+        int sum=number;
+        string resultTemp[number];
+        for(int i=0;i<digits.length();i++){
+            number/=helper1[digits[i]-'2'];
+            for(int j=0;j<sum;j++){
+                int a=j/number;
+                int b=a%helper1[digits[i]-'2'];
+                resultTemp[j]=resultTemp[j]+helper[digits[i]-'2'][b];
+            }
+        }
+        vector<string> v(resultTemp,resultTemp+sum);
+        return v;
+    }
+};

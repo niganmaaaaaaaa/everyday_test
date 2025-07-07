@@ -1,0 +1,22 @@
+class Solution {
+public:
+    int minEatingSpeed(vector<int> &piles, int h) {
+        auto check = [&](int k) -> bool {
+            int sum = piles.size();
+            for (int p : piles) {
+                sum += (p - 1) / k;
+                if (sum > h) {
+                    return false;
+                }
+            }
+            return true;
+        };
+        int left = 0; // 循环不变量：恒为 false
+        int right = ranges::max(piles); // 循环不变量：恒为 true
+        while (left + 1 < right) { // 开区间不为空
+            int mid = left + (right - left) / 2;
+            (check(mid) ? right : left) = mid;
+        }
+        return right; // 最小的 true
+    }
+};

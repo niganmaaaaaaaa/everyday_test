@@ -1,0 +1,237 @@
+---------------------------------练习1-----------------------
+/*
+	这里首先想到的是依靠魔方的规律但又不太一样，有牵一发而动全身感觉
+	看了题解，发现自己模拟不出来，放弃这道题。
+	推荐题解，题解也只有一个，如下：https://www.luogu.com.cn/article/gv7y0lzw
+*/
+
+#include <bits/stdc++.h>
+using namespace std;
+
+#define CARDID 100003
+#define N 303
+int cxpos[CARDID],cypos[CARDID],cx2pos[CARDID],cy2pos[CARDID];	// 注意：x 纵向，y 横向。
+int oxpos[CARDID],oypos[CARDID],ox2pos[CARDID],oy2pos[CARDID],targets[N][N];	// 卡牌的原先位置
+int exist[CARDID] = {}, rexist[CARDID] = {};	// 有几张卡牌
+bool counter[CARDID] = {};
+bool failure = false;
+bool cpx = false, cpy = false;		// 是否有冲突
+int xmove = 0, ymove = 0;			// 是否需要进行该方向的交换
+
+inline int mini(int x, int y) {
+	return x<y?x:y;
+}
+
+inline bool judge(int x1, int y1, int x2, int y2) {
+	int &type1 = targets[x1][y1], &type2 = targets[x2][y2];
+	bool f1, f2;
+	switch (rexist[type1]) {
+		case 1:
+			switch (rexist[type2]) {
+				case 1:
+					return (x1 == x2) ? (cypos[type1] == cypos[type2]) : (cxpos[type1] == cxpos[type2]);
+					break;
+				case 2:
+					return (x1 == x2) ? (cypos[type1] == cypos[type2] && cypos[type1] == cy2pos[type2]
+						&& oxpos[type1] == oxpos[type2] && oxpos[type1] == ox2pos[type2]) 
+						: (cxpos[type1] == cxpos[type2] && cxpos[type1] == cx2pos[type2]
+						&& oypos[type1] == oypos[type2] && oypos[type1] == oy2pos[type2]);
+					break;
+			}
+			break;
+		case 2:
+			switch (rexist[type2]) {
+				case 1:
+					return (x1 == x2) ? (cypos[type1] == cypos[type2] && cy2pos[type1] == cypos[type2]
+						&& oxpos[type1] == oxpos[type2] && ox2pos[type1] == oxpos[type2]) 
+						: (cxpos[type1] == cxpos[type2] && cx2pos[type1] == cxpos[type2]
+						&& oypos[type1] == oypos[type2] && oy2pos[type1] == oypos[type2]);
+					break;
+				case 2:
+					f1 = (x1 == x2) ? (cypos[type1] == cypos[type2] && cy2pos[type1] == cypos[type2]
+						&& oxpos[type1] == oxpos[type2] && ox2pos[type1] == oxpos[type2]) 
+						: (cxpos[type1] == cxpos[type2] && cx2pos[type1] == cxpos[type2]
+						&& oypos[type1] == oypos[type2] && oy2pos[type1] == oypos[type2]);
+					f2 = (x1 == x2) ? (cypos[type1] == cypos[type2] && cypos[type1] == cy2pos[type2]
+						&& oxpos[type1] == oxpos[type2] && oxpos[type1] == ox2pos[type2]) 
+						: (cxpos[type1] == cxpos[type2] && cxpos[type1] == cx2pos[type2]
+						&& oypos[type1] == oypos[type2] && oypos[type1] == oy2pos[type2]);
+					return f1 && f2;
+					break;
+			}
+			break;
+	}
+}
+
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(0);
+	cout.tie(0);
+
+	int n,a,b,tmp;
+	cin>>n>>a>>b;
+	for (int i = 0; i < n; i++) {
+		for (int j = 0; j < n; j++) {
+			cin>>tmp;
+			targets[i][j] = tmp;
+			if (!exist[tmp]) {
+				oxpos[tmp] = i;
+				oypos[tmp] = j;
+			} else {
+				ox2pos[tmp] = i;
+				oy2pos[tmp] = j;
+			}
+			exist[tmp]++;
+			rexist[tmp]++;
+		}
+	}
+	for (int i = 0; i < n; i++) {
+		for (int j = 0; j < n; j++) {
+			cin>>tmp;
+			if (!exist[tmp]) {
+				failure = true;
+			} else {
+				exist[tmp]--;
+				if (oxpos[tmp] != i && ox2pos[tmp] != i) {
+					xmove = 1;
+				}
+				if (oypos[tmp] != j && oy2pos[tmp] != j) {
+					ymove = 1;
+				}
+				if (counter[tmp]) {
+					cx2pos[tmp] = i;
+					cy2pos[tmp] = j;
+				} else {
+					cxpos[tmp] = i;
+					cypos[tmp] = j;
+				}
+				counter[tmp] = true;
+			}
+		}
+	}
+	if (failure) {
+		cout<<"Fail"<<endl;
+		return 0;
+	}
+	for (int i = 0; i < n; i++) {
+		for (int j = 0; j < n; j++) {
+			for (int k = 0; k < i; k++) {
+				if (judge(i,j,k,j)) {
+					cpx = true;
+				}
+			}
+			for (int k = 0; k < j; k++) {
+				if (judge(i,j,i,k)) {
+					cpy = true;
+				}
+			}
+		}
+	}
+	int result = xmove * b + ymove * a;
+	if (cpx && cpy) {
+		result += mini(a,b);
+	}
+	cout<<result<<endl;
+
+	return 0;
+}
+---------------------------------练习2-----------------------
+/*
+	每对关系不好的奶牛 (a, b)（设 a < b）要求区间 [a, b-1] 内至少有一个分割点（分割点位于奶牛之间，位置为整数）。
+	选择最少的点（分割点），使每个区间至少包含一个点。
+	贪心：
+		将区间按 右端点 排序。
+		遍历区间：
+		若当前区间不包含已选分割点，则在其 右端点 添加新分割点。
+		最小照片数 = 分割点数 + 1。
+*/
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cstdio>
+using namespace std;
+
+int main() {
+    int n, k;
+    scanf("%d%d", &n, &k);
+    vector<pair<int, int>> intervals;
+
+    // 读取k对关系不好的奶牛
+    for (int i = 0; i < k; i++) {
+        int a, b;
+        scanf("%d%d", &a, &b);
+        if (a > b) swap(a, b);  // 确保a < b
+        intervals.push_back({a, b - 1});  // 区间[a, b-1]
+    }
+
+    // 按右端点排序
+    sort(intervals.begin(), intervals.end(), [](const auto& x, const auto& y) {
+        return x.second < y.second;
+    });
+
+    int cut = -1;  // 最后一个分割点位置（初始为-1）
+    int count = 0; // 分割点数量
+
+    for (auto& inter : intervals) {
+        int left = inter.first;
+        int right = inter.second;
+        if (left > cut) {  // 当前区间无分割点
+            count++;
+            cut = right;   // 在右端点添加分割点
+        }
+    }
+
+    cout << count + 1 << endl;  // 照片数 = 分割点数 + 1
+    return 0;
+}
+---------------------------------练习3-----------------------
+/*
+	动态规划
+	定义 dp[j] 表示走完前 j 段路的最小疲劳值。
+	初始化：dp[0] = 0（未走路），dp[j] = INF（j > 0）。
+	状态转移：对于第 i 天（1 到 M），考虑是否将第 i 天用于走第 j 段路：
+		dp[j] = min(dp[j], dp[j-1] + D[j] * C[i])
+	注意：j 必须从大到小遍历，避免覆盖上一轮的状态。
+*/
+#include <iostream>
+#include <algorithm>
+#include <climits>
+#include <vector>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    int N, M;
+    cin >> N >> M;
+
+    vector<long long> D(N + 1);
+    for (int i = 1; i <= N; i++) {
+        cin >> D[i];
+    }
+
+    vector<long long> C(M + 1);
+    for (int i = 1; i <= M; i++) {
+        cin >> C[i];
+    }
+
+    vector<long long> dp(N + 1, LLONG_MAX);
+    dp[0] = 0;
+
+    for (int i = 1; i <= M; i++) {
+        int end = min(i, N);
+        for (int j = end; j >= 1; j--) {
+            if (dp[j-1] != LLONG_MAX) {
+                if (dp[j] == LLONG_MAX) {
+                    dp[j] = dp[j-1] + D[j] * C[i];
+                } else {
+                    dp[j] = min(dp[j], dp[j-1] + D[j] * C[i]);
+                }
+            }
+        }
+    }
+
+    cout << dp[N] << endl;
+    return 0;
+}

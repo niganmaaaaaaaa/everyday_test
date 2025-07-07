@@ -1,0 +1,57 @@
+class Solution {
+public:
+    string decodeString(string s) {
+        string s1, s2;
+        vector<char> a;//a最后的输出结果，b临时字符栈
+        vector<string> b;
+        for (int i = 0; i < s.length(); ++i) {
+            char c = s[i];
+            if (c == '[' || (c >= 97 && c <= 122)) {//如果是【或者是字母
+                if (c == '[') {
+                    if (i == 0 || s[i - 1] < 48 || s[i - 1]>57) {//处理特殊情况
+                        b.push_back("1");
+                    }
+                    else {
+                        int e = i;
+                        string f,g;
+                        while (s[e - 1] >= 48 && s[e - 1] <= 57) {//判断多位数
+                            f += s[e-- - 1];
+                            if (e < 1)break;
+                        }
+                        for (int p = f.size() - 1; p >= 0; --p) {//翻转
+                            g.push_back(f[p]);
+                        }
+                        b.push_back(g);
+                    }
+                }
+                a.push_back(c);
+            }
+            else if (c == ']') {
+                int size = a.size();
+                char d = a[size - 1];
+                while (a[size - 1] != '[') {
+                    s2.push_back(a[size-1]);//每次重复的字符串
+                    a.pop_back();
+                    size--;
+                }
+                a.pop_back();//将最后的[也弹出去
+                int count1=0,shi=1;
+                for (int q = b[b.size() - 1].size()-1;q>=0; --q) {
+                    count1 += (b[b.size() - 1][q]-48) * shi;
+                    shi *= 10;
+                }
+                for (int m = 0; m < count1; ++m) {//打印多少遍
+                    for (int n = s2.length() - 1; n >= 0; --n) {//从后往前打印，然后撞到a里面去，继续循环
+                        a.push_back(s2[n]);
+                    }
+                }
+                b.pop_back();
+                s2.erase(0);//把栈置空
+            }
+        }
+        for (int i = 0; i < a.size(); ++i) {
+            s1 += a[i];
+        }
+        return s1;
+    }
+};

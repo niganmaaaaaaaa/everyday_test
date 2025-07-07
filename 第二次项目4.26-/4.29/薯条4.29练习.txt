@@ -1,0 +1,57 @@
+------------------------------------------4.29练习1---------------------------------------------------
+class Solution {
+public:
+    void rotate(vector<vector<int>>& matrix) {
+        int n=matrix.size();
+        int tmp;
+        for(int i=0;i<(n+1)/2;i++){//第1行特定点位
+            for(int j=i;j<n-1-i;++j){//第i行要翻转的位置，(i,j) 只有该行最后一个不用翻转
+                int count=3;
+                int x=i,y=j;
+                while(count--){
+                    swap(matrix[x][y],matrix[y][n-1-x]);//交换一下，只用三次就可以了
+                    int c=x;
+                    x=n-1-y;
+                    y=c;
+                }
+            }
+        }
+    }
+};
+------------------------------------------4.29练习2---------------------------------------------------
+class Solution {
+    void countingSort(vector<int>& nums,int m){
+        int n=nums.size();
+        int* count=new int[m+1];
+        memset(count,0,sizeof(int)*(m+1));
+        for(int i=0;i<n;++i){
+            count [ nums[i] ]++;
+        }
+        int index=0;
+        for(int i=0;i<m+1;i++){
+            while(count[i]-- > 0){
+                nums[index++]=i;
+            }
+        }
+        delete[] count;
+    }
+public:
+
+    void sortColors(vector<int>& nums) {
+        countingSort(nums,2);
+    }
+};
+------------------------------------------4.29练习3---------------------------------------------------
+class Solution {
+    
+public:
+    int rob(vector<int>& nums) {
+        int size=nums.size();
+        vector<int> count(size+1,0);
+        count[1]=nums[0];//预先设置值
+        for(int i=2;i<size+1;++i){
+            count[i]=max(count[i-1],nums[i-1]+count[i-2]);//动态转移方程
+        }
+        return count[size];
+    }
+};

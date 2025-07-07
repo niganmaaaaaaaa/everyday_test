@@ -1,0 +1,36 @@
+class NumArray {
+public:
+
+    vector<int> A;// 原数组
+    vector<int> C;   // 树状数组
+
+    int lowBit(int x) {
+        return x & (-x);
+    }
+
+    NumArray(vector<int>& nums):A(nums) {
+        C = vector<int> (A.size() + 1, 0);
+        //构造树形数组
+        for(int i = 1; i<=A.size(); i ++) {
+            C[i] += A[i - 1];
+            //父结点要加上子结点的值
+            if(i + lowBit(i) <= A.size()) C[i + lowBit(i)] += C[i];
+        }
+    }
+    
+    void update(int index, int val) {
+        int&& d=val - A[index];
+        for(int i = index + 1; i <= C.size() - 1; i += lowBit(i)) 
+            C[i] += d; // 更新树状数组       
+        A[index] = val; // 更新原数组
+    }
+    
+    int sumRange(int left, int right) {
+        int r = 0, l = 0;
+        //求right的前缀和
+        for(int i = right + 1; i >= 1; i -= lowBit(i)) r += C[i];
+        //求left的前缀和
+        for(int i = left; i >= 1; i -= lowBit(i)) l += C[i];
+        return r - l;
+    }
+};

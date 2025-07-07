@@ -1,0 +1,80 @@
+------------------------------------------4.29练习1---------------------------------------------------
+/*
+	原地翻转，有个思路，我们根据翻转位置提取公式
+		第i行j列 （i,j） 翻转90度 位置在 (j,n-1-i)索引处
+	再分到某个具体位置我们还可以发现，对于某个位置来说，翻转90度，就是改变该位置的值三次，该位置值总共有四个
+		我们利用上面式子，搞一下，
+		i , j  --->  j , n-1-i
+		那么原本 i , j位置 要由下一个 i2 , j2 来替代
+		那么i2 =  n - 1 - j  ,  j2 = i
+		那么把 原本的 i ， j值换为 i2 , j2 那么就是连续的替换，某个位置的连续翻转，只用翻转三次就好
+			翻转使用交换函数swap就可以实现，也只使用三次就完成了
+	按照这个思路，寻找每个特定点位，依次遍历就可以了
+*/
+class Solution {
+public:
+    void rotate(vector<vector<int>>& matrix) {
+        int n=matrix.size();
+        int tmp;
+        for(int i=0;i<(n+1)/2;i++){//第1行特定点位
+            for(int j=i;j<n-1-i;++j){//第i行要翻转的位置，(i,j) 只有该行最后一个不用翻转
+                int count=3;
+                int x=i,y=j;
+                while(count--){
+                    swap(matrix[x][y],matrix[y][n-1-x]);//交换一下，只用三次就可以了
+                    int c=x;
+                    x=n-1-y;
+                    y=c;
+                }
+            }
+        }
+    }
+};
+------------------------------------------4.29练习2---------------------------------------------------
+/*
+	计数排序（非原地排序）
+		根据nums数据的值记录到另一个数组中，nums数组的值就是另一个数组的索引，记录每个值的数量
+		然后再遍历这个数组，从小按大依次输出就可以了
+*/
+class Solution {
+    void countingSort(vector<int>& nums,int m){
+        int n=nums.size();
+        int* count=new int[m+1];
+        memset(count,0,sizeof(int)*(m+1));
+        for(int i=0;i<n;++i){
+            count [ nums[i] ]++;
+        }
+        int index=0;
+        for(int i=0;i<m+1;i++){
+            while(count[i]-- > 0){
+                nums[index++]=i;
+            }
+        }
+        delete[] count;
+    }
+public:
+
+    void sortColors(vector<int>& nums) {
+        countingSort(nums,2);
+    }
+};
+------------------------------------------4.29练习3---------------------------------------------------
+/*
+	动态规划
+		子问题，k个房子的最优解是什么，
+			最小子问题只有一个房子，答案是该房子值，
+			只有两个房子，最开始添加一个0-值（相当于有三个房子，k=3，让问题具有普遍性且不影响最后总结果），考虑前k-2个房子的最优解，以及前k-1个房子最优				解，取两者最大值，也就是跳着与不跳选一个，例如  0 1 2 3      取3 和 （0,1）最优解   以及  取  （0,1,2）最优解
+*/
+class Solution {
+    
+public:
+    int rob(vector<int>& nums) {
+        int size=nums.size();
+        vector<int> count(size+1,0);
+        count[1]=nums[0];//预先设置值
+        for(int i=2;i<size+1;++i){
+            count[i]=max(count[i-1],nums[i-1]+count[i-2]);//动态转移方程
+        }
+        return count[size];
+    }
+};
